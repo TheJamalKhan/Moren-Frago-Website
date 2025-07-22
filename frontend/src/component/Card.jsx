@@ -35,14 +35,14 @@ function Card({ name, image, id, price, mrp, discountPercentage }) {
             {/* Content Area: Consistent padding for text details */}
             <div className='flex flex-col w-full px-[2px] pt-[5px] pb-[5px]'>
                 {/* Product Name: Maroon color, responsive text size, line clamp */}
-                <div className='text-[#800000] text-sm md:text-[18px] font-semibold overflow-hidden text-ellipsis line-clamp-2 mb-1'>
+                <div className='text-[#383838] text-sm md:text-[18px] font-semibold overflow-hidden text-ellipsis line-clamp-2 mb-1'>
                     {name}
                 </div>
 
                 {/* Price, MRP, and Discount Percentage Block */}
                 <div className='flex flex-col items-start'>
                     <div className='flex items-baseline mb-1'>
-                        <div className='text-black text-[14px] font-bold mr-2'>{currency} {price}</div>
+                        <div className='text-[#000000] text-[14px] font-bold mr-2'>{currency} {price}</div>
 
                         {mrp && mrp > price && (
                             <div className='text-[#808080] text-[12px] line-through'>
@@ -53,7 +53,7 @@ function Card({ name, image, id, price, mrp, discountPercentage }) {
 
                     {/* Discount Percentage */}
                     {displayDiscount > 0 && (
-                        <div className='text-[#66bb6a] text-[12px] font-medium'>
+                        <div className='text-[#4b844e] text-[15px] font-medium'>
                             {Math.round(displayDiscount)}% Off
                         </div>
                     )}

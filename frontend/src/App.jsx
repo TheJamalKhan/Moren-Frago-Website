@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useContext } from 'react';
-import { Route, Routes, useLocation, Navigate } from 'react-router-dom'; // Corrected: Added Navigate
+import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import Registration from './pages/Registration';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -13,39 +13,64 @@ import 'react-toastify/dist/ReactToastify.css';
 import Nav from './component/Nav.jsx';
 import { userDataContext } from './context/UserContext.jsx';
 
+// Import your new customer service pages
+import FAQPage from './pages/FAQPage.jsx';
+import ReturnsPage from './pages/ReturnsPage.jsx';
+import ShippingPage from './pages/ShippingPage.jsx';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
+import HelpCenterPage from './pages/HelpCenterPage.jsx';
+
+// NEW: Import DeliveryPage and TermsPage
+import DeliveryPage from './pages/DeliveryPage.jsx';
+import TermsPage from './pages/TermsPage.jsx';
+
 
 function App() {
   const location = useLocation();
-  const {userData} = useContext(userDataContext)
+  const { userData } = useContext(userDataContext);
+
+  // Helper component for protected routes to avoid repetition
+  const ProtectedRoute = ({ children }) => {
+    return userData ? children : <Navigate to="/login" state={{ from: location.pathname }} />;
+  };
+
   return (
     <>
       <ToastContainer />
-      {userData && <Nav/>}
+      {/* Conditionally render Nav based on userData, as you currently have */}
+      {userData && <Nav />}
 
       <Routes>
-       <Route path='/login'
-       element={userData ? (<Navigate to={location.state?.from || "/"}/> )
-       : (<Login/>)
-         }/>
+        {/* Public Routes (or routes handling redirect logic) */}
+        <Route
+          path='/login'
+          element={userData ? (<Navigate to={location.state?.from || "/"} />) : (<Login />)}
+        />
+        <Route
+          path='/signup'
+          element={userData ? (<Navigate to={location.state?.from || "/"} />) : (<Registration />)}
+        />
 
-       <Route path='/signup'
-       element={userData ? (<Navigate to={location.state?.from || "/"}/> )
-       : (<Registration/>)}/>
+        {/* Protected Routes - only accessible if userData exists */}
+        <Route path='/' element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path='/about' element={<ProtectedRoute><About /></ProtectedRoute>} />
+        <Route path='/collection' element={<ProtectedRoute><Collections /></ProtectedRoute>} />
+        <Route path='/product' element={<ProtectedRoute><Product /></ProtectedRoute>} />
+        <Route path='/contact' element={<ProtectedRoute><Contact /></ProtectedRoute>} />
 
-       <Route path='/'
-       element={userData ? <Home/> : <Navigate to="/login" state={{from: location.pathname}} /> }/>
+        {/* Customer Service and Policy Pages */}
+        <Route path='/faq' element={<ProtectedRoute><FAQPage /></ProtectedRoute>} />
+        <Route path='/returns' element={<ProtectedRoute><ReturnsPage /></ProtectedRoute>} />
+        <Route path='/shipping' element={<ProtectedRoute><ShippingPage /></ProtectedRoute>} />
+        <Route path='/privacy-policy' element={<ProtectedRoute><PrivacyPolicyPage /></ProtectedRoute>} />
+        <Route path='/help-center' element={<ProtectedRoute><HelpCenterPage /></ProtectedRoute>} />
+        
+        {/* NEW: Routes for Delivery and Terms */}
+        <Route path='/delivery' element={<ProtectedRoute><DeliveryPage /></ProtectedRoute>} />
+        <Route path='/terms' element={<ProtectedRoute><TermsPage /></ProtectedRoute>} />
 
-       <Route path='/about'
-       element={userData ? <About/> : <Navigate to="/login" state={{from: location.pathname}} /> }/>
-
-       <Route path='/collection'
-       element={userData ? <Collections/> : <Navigate to="/login" state={{from: location.pathname}} /> }/>
-
-       <Route path='/product'
-       element={userData ? <Product/> : <Navigate to="/login" state={{from: location.pathname}} /> }/>
-
-       <Route path='/contact'
-       element={userData ? <Contact/> : <Navigate to="/login" state={{from: location.pathname}} /> }/>
+        {/* You might want a catch-all route for 404 pages */}
+        {/* <Route path="*" element={<NotFoundPage />} /> */}
       </Routes>
     </>
   );

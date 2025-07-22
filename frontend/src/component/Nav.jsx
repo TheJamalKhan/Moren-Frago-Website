@@ -6,21 +6,23 @@ import { AiOutlineShoppingCart } from "react-icons/ai";
 import { BsFillSearchHeartFill } from "react-icons/bs";
 import { userDataContext } from "../context/UserContext";
 import { AiOutlineHome } from "react-icons/ai";
-import { BsCollection } from "react-icons/bs"
+import { BsCollection } from "react-icons/bs";
 import { IoMdContacts } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { authDataContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { shopDataContext } from "../context/ShopContext";
 
 function Nav() {
   const { userData, setUserData, getCurrentUser } = useContext(userDataContext);
   const { serverUrl } = useContext(authDataContext);
-  const [showSearch, setShowSearch] = useState(false);
+  const {showSearch, setShowSearch, search , setSearch} = useContext(shopDataContext)
   const [showProfile, setShowProfile] = useState(false);
   const navigate = useNavigate();
 
   const [firstLetter, setFirstLetter] = useState('');
+  const [scrolled, setScrolled] = useState(false); 
 
   useEffect(() => {
     if (userData && userData.name) {
@@ -35,6 +37,23 @@ function Nav() {
       getCurrentUser();
     }
   }, [getCurrentUser, userData]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = window.scrollY;
+      if (offset > 50) { 
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -51,9 +70,9 @@ function Nav() {
   return (
     <div className='w-full z-10 fixed top-0 left-0 right-0'>
       {/* Top Navbar */}
-      <div
-        className='h-[70px] flex items-center justify-between px-[30px] shadow-md shadow-[#715f4c]'
-        style={{ backgroundColor: 'rgba(238, 204, 188, 0.8)' }}
+      <div className={`h-[70px] flex items-center justify-between px-[30px] shadow-md shadow-[#0f0a05] transition-colors duration-300 ease-in-out
+          bg-[#f3d9c8b0] backdrop-blur-sm 
+        `}
       >
         {/* Logo */}
         <div className='w-[30%] flex items-center justify-start gap-[10px] cursor-pointer' onClick={() => navigate('/')}>
@@ -77,7 +96,7 @@ function Nav() {
           {!showSearch ? (
             <IoSearchSharp
               className='cursor-pointer hover:text-[#d97706] transition duration-300'
-              onClick={() => setShowSearch(true)}
+              onClick={() => {setShowSearch(true); navigate("/collection") }}
             />
           ) : (
             <BsFillSearchHeartFill
@@ -119,7 +138,7 @@ function Nav() {
                     >
                       Login
                     </li>
-                     <li
+                    <li
                       className="py-2 px-3 hover:bg-[#333] cursor-pointer rounded-md transition-colors duration-200"
                       onClick={() => {
                         navigate('/signup');
@@ -132,7 +151,6 @@ function Nav() {
                 )}
                 {userData && (
                   <>
-                    {/* Dashboard link removed as per request */}
                     <li
                       className="py-2 px-3 hover:bg-[#333] cursor-pointer rounded-md transition-colors duration-200"
                       onClick={() => {
@@ -183,7 +201,7 @@ function Nav() {
             px-4 sm:px-6 md:px-10 lg:px-12 xl:px-14
             text-sm sm:text-base md:text-lg lg:text-xl
           `}
-          placeholder="Search Here"
+          placeholder="Search Here" onChange={(e)=>{setSearch(e.target.value)}} value = {search}
         />
       </div>
 

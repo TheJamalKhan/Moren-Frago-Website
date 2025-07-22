@@ -6,7 +6,9 @@ import { authDataContext } from './AuthContext';
 export const shopDataContext = createContext();
 
 function ShopContext({ children }) {
-    let [products, setProducts] = useState([]); // Ensure initial state is an empty array
+    let [products, setProducts] = useState([])
+    let [search,setSearch] = useState('')
+    let [showSearch,setShowSearch] = useState(false)
     let { serverUrl } = useContext(authDataContext);
     let currency = '₹';
     let delivery_fee = 40;
@@ -48,7 +50,7 @@ function ShopContext({ children }) {
         products,
         currency,
         delivery_fee,
-        getProducts
+        getProducts,search,setSearch,showSearch,setShowSearch
     };
 
     return (
