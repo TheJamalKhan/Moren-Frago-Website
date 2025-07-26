@@ -30,17 +30,16 @@ function BestSeller() {
         {bestSeller.length > 0 ? (
           bestSeller.map((item) => (
             <Card
-              key={item._id}
-              name={item.name}
-              image={item.image1}
-              id={item._id}
-              price={item.price}
-              mrp={item.mrp}
-              discountPercentage={item.discountPercentage}
-              // IMPORTANT: Removed customWidthClasses prop here.
-              // The Card component will now size itself based on the grid layout,
-              // matching how it behaves in LatestCollection.
-            />
+        key={item._id}
+        name={item.name}
+        // Pass both image1 and image3 as props
+        image1={item.image1} 
+        image3={item.image3}
+        id={item._id}
+        price={item.price}
+        mrp={item.mrp}
+        discountPercentage={item.discountPercentage}
+    />
           ))
         ) : (
           <p className="text-gray-500 text-center mt-10 col-span-full">No best-selling products found.</p>

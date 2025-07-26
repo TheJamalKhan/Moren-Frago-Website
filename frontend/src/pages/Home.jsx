@@ -9,19 +9,23 @@ import NewLetterBox from '../component/NewLetterBox';
 import Footer from '../component/Footer';
 function Home() {
   let heroData = [
-    
-      {text1: "30% OFF on your first purchase",
-      text2: "Style that",}
-
-    ,{text1: "Streetwear for the modern you",
-      text2: "Limited stocks",}
-      
-    ,{text1: "Elevate your style",
-      text2: "Discover the latest trends",}
-
-    ,{text1: "Unleash your style",
-      text2: "Shop the latest collection",}
-  ]
+    {
+      text1: "Welcome to Moren Frago.",
+      text2: "Enjoy 30% Off Your First Order."
+    },
+    {
+      text1: "Exclusive Drops.",
+      text2: "Own It Before It's Gone."
+    },
+    {
+      text1: "Style, Elevated.",
+      text2: "Discover the New Wave."
+    },
+    {
+      text1: "Define Your Look.",
+      text2: "The Latest Collection is Here."
+    }
+]
   let [heroCount, setHeroCount] = useState(0);
   useEffect(() => {
   let interval = setInterval(() => {

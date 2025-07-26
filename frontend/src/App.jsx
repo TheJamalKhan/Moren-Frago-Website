@@ -1,35 +1,33 @@
-// src/App.jsx
 import React, { useContext } from 'react';
-import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import Registration from './pages/Registration';
 import Home from './pages/Home';
 import Login from './pages/Login';
-import Collections from './pages/Collections.jsx';
-import About from './pages/About.jsx';
-import Contact from './pages/Contact.jsx';
-import Product from './pages/Product.jsx';
+import Collections from './pages/Collections';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Product from './pages/Product';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Nav from './component/Nav.jsx';
-import { userDataContext } from './context/UserContext.jsx';
+import Nav from './component/Nav';
+import { userDataContext } from './context/UserContext';
 
-// Import your new customer service pages
-import FAQPage from './pages/FAQPage.jsx';
-import ReturnsPage from './pages/ReturnsPage.jsx';
-import ShippingPage from './pages/ShippingPage.jsx';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
-import HelpCenterPage from './pages/HelpCenterPage.jsx';
+// Import your customer service pages
+import FAQPage from './pages/FAQPage';
+import ReturnsPage from './pages/ReturnsPage';
+import ShippingPage from './pages/ShippingPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import HelpCenterPage from './pages/HelpCenterPage';
+import DeliveryPage from './pages/DeliveryPage';
+import TermsPage from './pages/TermsPage';
+import ProductDetail from './pages/ProductDetail';
+// --- FIX: Import the Cart component ---
+import Cart from './pages/Cart'; // Make sure this path is correct
 
-// NEW: Import DeliveryPage and TermsPage
-import DeliveryPage from './pages/DeliveryPage.jsx';
-import TermsPage from './pages/TermsPage.jsx';
-
-
-function App() {
+const AppContent = () => {
   const location = useLocation();
   const { userData } = useContext(userDataContext);
 
-  // Helper component for protected routes to avoid repetition
   const ProtectedRoute = ({ children }) => {
     return userData ? children : <Navigate to="/login" state={{ from: location.pathname }} />;
   };
@@ -37,11 +35,10 @@ function App() {
   return (
     <>
       <ToastContainer />
-      {/* Conditionally render Nav based on userData, as you currently have */}
       {userData && <Nav />}
 
       <Routes>
-        {/* Public Routes (or routes handling redirect logic) */}
+        {/* Public Routes */}
         <Route
           path='/login'
           element={userData ? (<Navigate to={location.state?.from || "/"} />) : (<Login />)}
@@ -51,12 +48,16 @@ function App() {
           element={userData ? (<Navigate to={location.state?.from || "/"} />) : (<Registration />)}
         />
 
-        {/* Protected Routes - only accessible if userData exists */}
+        {/* Protected Routes */}
         <Route path='/' element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path='/about' element={<ProtectedRoute><About /></ProtectedRoute>} />
         <Route path='/collection' element={<ProtectedRoute><Collections /></ProtectedRoute>} />
         <Route path='/product' element={<ProtectedRoute><Product /></ProtectedRoute>} />
         <Route path='/contact' element={<ProtectedRoute><Contact /></ProtectedRoute>} />
+        <Route path='/productdetail/:id' element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+        
+        {/* --- FIX: Add the route for the Cart page --- */}
+        <Route path='/cart' element={<ProtectedRoute><Cart /></ProtectedRoute>} />
 
         {/* Customer Service and Policy Pages */}
         <Route path='/faq' element={<ProtectedRoute><FAQPage /></ProtectedRoute>} />
@@ -64,15 +65,18 @@ function App() {
         <Route path='/shipping' element={<ProtectedRoute><ShippingPage /></ProtectedRoute>} />
         <Route path='/privacy-policy' element={<ProtectedRoute><PrivacyPolicyPage /></ProtectedRoute>} />
         <Route path='/help-center' element={<ProtectedRoute><HelpCenterPage /></ProtectedRoute>} />
-        
-        {/* NEW: Routes for Delivery and Terms */}
         <Route path='/delivery' element={<ProtectedRoute><DeliveryPage /></ProtectedRoute>} />
         <Route path='/terms' element={<ProtectedRoute><TermsPage /></ProtectedRoute>} />
-
-        {/* You might want a catch-all route for 404 pages */}
-        {/* <Route path="*" element={<NotFoundPage />} /> */}
       </Routes>
     </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 

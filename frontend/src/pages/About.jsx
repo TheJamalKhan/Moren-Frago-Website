@@ -69,13 +69,13 @@ function AboutPage() {
             <div className='text-base md:text-lg space-y-6 lg:pl-8'>
               <p className='leading-relaxed'>
                 Moren Frago is born for smart, seamless shopping—created to deliver quality products,
-                trending styles, and everyday essentials like **stylish bottles and functional daily gears**, all in one convenient place. With reliable service, fast delivery,
+                trending styles, and everyday essentials like <strong>stylish bottles and functional daily gears</strong>, all in one convenient place. With reliable service, fast delivery,
                 and great value, Moren Frago makes your online shopping experience simple, satisfying,
                 and stress-free.
               </p>
               <p className='leading-relaxed'>
                 We empower modern shoppers—combining style, convenience, and affordability. Whether it's
-                fashion apparel, essential daily gears like **bottles**, or the latest trends, we bring everything you need to one trusted platform
+                fashion apparel, essential daily gears like <strong>bottles</strong>, or the latest trends, we bring everything you need to one trusted platform
                 with fast delivery, easy returns, and a customer-first shopping experience you'll love.
               </p>
 

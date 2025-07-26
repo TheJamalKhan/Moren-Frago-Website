@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -12,11 +13,11 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
     },
-    // cartData: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Cart',
-    //     default: {},
-    // }
+    // --- FIX: Change the type back to Object to match your teacher's model ---
+    cartData: {
+        type: Object,
+        default: {},
+    }
 }, {timestamps: true, minimize: false});    
 
 const User = mongoose.model("User", userSchema);
