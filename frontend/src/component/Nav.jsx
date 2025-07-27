@@ -17,8 +17,7 @@ import { shopDataContext } from "../context/ShopContext";
 function Nav() {
   const { userData, setUserData, getCurrentUser } = useContext(userDataContext);
   const { serverUrl } = useContext(authDataContext);
-  // getCartCount is now a number, not a function
-  const { showSearch, setShowSearch, search, setSearch, getCartCount } = useContext(shopDataContext);
+  const { showSearch, setShowSearch, search, setSearch, getCartCount, setIsCartOpen } = useContext(shopDataContext);
   const [showProfile, setShowProfile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -72,7 +71,8 @@ function Nav() {
   return (
     <div className='w-full z-10 fixed top-0 left-0 right-0'>
       {/* Top Navbar */}
-      <div className={`h-[70px] flex items-center justify-between px-[30px] shadow-md shadow-[#0f0a05] transition-colors duration-300 ease-in-out bg-[#f3d9c8b0] backdrop-blur-sm`}>
+      {/* --- THIS IS THE FIX --- */}
+      <div className={`relative z-20 h-[70px] flex items-center justify-between px-[30px] shadow-md shadow-[#0f0a05] transition-colors duration-300 ease-in-out bg-[#f3d9c8b0] backdrop-blur-sm`}>
         {/* Logo */}
         <div className='w-[30%] flex items-center justify-start gap-[10px] cursor-pointer' onClick={() => navigate('/')}>
           <img src={logo} alt="logo" className="w-[120px]" />
@@ -126,7 +126,7 @@ function Nav() {
             )}
 
             {/* Profile Dropdown */}
-            <div className={`absolute w-[220px] bg-[#000000d7] top-[calc(100% + 10px)] right-0 border border-[#aaa9a9] rounded-[10px] z-20 transition-all duration-300 ease-in-out transform origin-top-right ${showProfile ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
+            <div className={`absolute w-[220px] bg-[#000000d7] top-[calc(100% + 10px)] right-0 border border-[#aaa9a9] rounded-[10px] z-30 transition-all duration-300 ease-in-out transform origin-top-right ${showProfile ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
               <ul className="text-white p-4 text-base font-sans">
                 {!userData && (
                   <>
@@ -155,6 +155,15 @@ function Nav() {
                     <li
                       className="py-2 px-3 hover:bg-[#333] cursor-pointer rounded-md transition-colors duration-200"
                       onClick={() => {
+                        navigate('/order');
+                        setShowProfile(false);
+                      }}
+                    >
+                      My Orders
+                    </li>
+                    <li
+                      className="py-2 px-3 hover:bg-[#333] cursor-pointer rounded-md transition-colors duration-200"
+                      onClick={() => {
                         handleLogout();
                         setShowProfile(false);
                       }}
@@ -163,14 +172,12 @@ function Nav() {
                     </li>
                   </>
                 )}
-                <li className="py-2 px-3 hover:bg-[#333] cursor-pointer rounded-md transition-colors duration-200">Order</li>
                 <li className="py-2 px-3 hover:bg-[#333] cursor-pointer rounded-md transition-colors duration-200" onClick={() => { navigate("/about"); setShowProfile(false); }}>About</li>
               </ul>
             </div>
           </div>
 
-          {/* Shopping Cart (Desktop) */}
-          <div className='relative hidden md:block transition-all duration-500 ease-in-out cursor-pointer' onClick={() => navigate('/cart')}>
+          <div className='relative hidden md:block transition-all duration-500 ease-in-out cursor-pointer' onClick={() => setIsCartOpen(true)}>
             <AiOutlineShoppingCart className='hover:text-[#d97706] transition duration-300' />
             {getCartCount > 0 && (
                 <p className='absolute w-[18px] h-[18px] flex items-center justify-center bg-black text-white rounded-full text-[9px] top-[-6px] right-[-10px]'>
@@ -182,11 +189,14 @@ function Nav() {
       </div>
 
       {/* Animated Search Bar */}
+      
       <div className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${showSearch ? 'h-[80px]' : 'h-0'} bg-[#2d2d2d] flex items-center justify-center`}>
         <input
           type="text"
           className={`h-[60%] bg-[#5a5652] rounded-full text-white placeholder:text-white transition-all duration-300 ease-in-out ${showSearch ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'} w-[85%] sm:w-[70%] md:w-[60%] lg:w-[50%] xl:w-[40%] 2xl:w-[35%] px-4 sm:px-6 md:px-10 lg:px-12 xl:px-14 text-sm sm:text-base md:text-lg lg:text-xl`}
-          placeholder="Search Here" onChange={(e)=>{setSearch(e.target.value)}} value={search}
+          placeholder="Search Here"
+          onChange={(e) => { setSearch(e.target.value) }} 
+          value={search}
         />
       </div>
 
@@ -205,9 +215,8 @@ function Nav() {
           Contact
         </button>
         
-        {/* Shopping Cart (Mobile) */}
         <div className="relative">
-            <button className='text-[white] flex items-center justify-center flex-col gap-[2px]' onClick={() => navigate('/cart')}>
+            <button className='text-[white] flex items-center justify-center flex-col gap-[2px]' onClick={() => setIsCartOpen(true)}>
               <AiOutlineShoppingCart className='w-[25px] h-[25px] text-[white] md:hidden' />
               Cart
             </button>

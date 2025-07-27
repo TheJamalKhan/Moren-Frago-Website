@@ -7,6 +7,10 @@ import Product from './Product';
 import OurPolicy from '../component/OurPolicy';
 import NewLetterBox from '../component/NewLetterBox';
 import Footer from '../component/Footer';
+import Marquee from '../component/Marquee';
+import TrustMarquee from '../component/TrustMarquee';
+import Bottle from '../component/Bottle';
+import ParallaxImage from '../component/ParallaxImage';
 function Home() {
   let heroData = [
     {
@@ -43,7 +47,11 @@ function Home() {
         heroData={heroData[heroCount]}
         />
     </div>
+    <Marquee />
     <Product/>
+    <ParallaxImage />
+    <TrustMarquee/>
+    <Bottle/>
     <OurPolicy/>
     <NewLetterBox/>
     <Footer/>

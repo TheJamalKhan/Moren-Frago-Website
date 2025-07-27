@@ -45,8 +45,8 @@ const Cart = () => {
         }
 
         const totalSavings = (totalMRP - subtotal) + couponDiscount;
-        const isFreeDelivery = subtotal >= 1500;
-        const amountNeeded = 1500 - subtotal;
+        const isFreeDelivery = subtotal >= 999;
+        const amountNeeded = 999 - subtotal;
 
         return { totalMRP, subtotal, totalSavings, isFreeDelivery, amountNeeded, couponDiscount, nextDiscountTier };
     }, [cartItem, products]);
@@ -54,7 +54,7 @@ const Cart = () => {
     // Calculate the final total including all discounts
     const finalTotal = (isFreeDelivery ? subtotal : subtotal + delivery_fee) - couponDiscount;
 
-    const progressPercentage = subtotal > 0 ? Math.min((subtotal / 1500) * 100, 100) : 0;
+    const progressPercentage = subtotal > 0 ? Math.min((subtotal / 999) * 100, 100) : 0;
 
     return (
         <div className="bg-gradient-to-b from-[#fbeee6] via-[#f3d9c8] to-[#e8cbb3] min-h-screen pt-24 md:pt-28 pb-28 md:pb-12 px-2 sm:px-6 lg:px-8 font-sans">

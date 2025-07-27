@@ -6,22 +6,18 @@ import User from "../model/userModel.js";
 export const addToCart = async (req, res) => {
     try {
         const { itemId, size } = req.body;
-        // The isAuth middleware should add the userId to the request object
-        const userId = req.userId; 
+        const userId = req.userId; // Get user ID from the isAuth middleware
 
         if (!userId) {
             return res.status(401).json({ message: "Authentication error, user ID not found." });
         }
 
-        // Use 'default' as the key for items that don't require a size
-        const cartKey = size || 'default';
-        const updatePath = `cartData.${itemId}.${cartKey}`;
+        const updatePath = `cartData.${itemId}.${size || 'default'}`;
 
-        // Atomically find the user and increment the cart item quantity
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $inc: { [updatePath]: 1 } },
-            { new: true } // 'new: true' returns the updated document
+            { new: true, upsert: false } 
         );
 
         if (!updatedUser) {
@@ -48,10 +44,8 @@ export const removeFromCart = async (req, res) => {
             return res.status(401).json({ message: "Authentication error, user ID not found." });
         }
         
-        const cartKey = size || 'default';
-        const updatePath = `cartData.${itemId}.${cartKey}`;
+        const updatePath = `cartData.${itemId}.${size || 'default'}`;
 
-        // Use the $unset operator to completely remove the field
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $unset: { [updatePath]: "" } }, 
@@ -81,7 +75,6 @@ export const getUserCart = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Always return a valid object to the frontend
         return res.status(200).json(user.cartData || {});
 
     } catch (error) {
@@ -91,7 +84,7 @@ export const getUserCart = async (req, res) => {
 };
 
 
-// --- THIS IS THE NEW, CORRECTED FUNCTION ---
+// --- THIS IS THE NEW FUNCTION YOU NEED ---
 // @desc    Update the quantity of an item in the cart
 // @route   POST /api/cart/update
 // @access  Private

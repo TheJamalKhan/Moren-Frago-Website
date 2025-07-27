@@ -5,8 +5,8 @@ import { MdEmail, MdPhone } from 'react-icons/md';
 
 function Footer() {
   return (
-    // Main footer container: flexible height, dark background, responsive padding
-    <div className='w-full bg-[#061414ec] text-[#fdfdfd] py-10 px-4 md:px-8 lg:px-16'>
+    // --- UPDATED: Increased bottom padding from py-10 to pb-24 to prevent overlap ---
+    <div className='w-full bg-[#061414ec] text-[#fdfdfd] pt-10 pb-24 px-4 md:px-8 lg:px-16'>
       <div className='max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12'>
 
         {/* Column 1: Company Info / Brand */}

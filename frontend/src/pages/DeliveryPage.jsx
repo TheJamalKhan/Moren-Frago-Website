@@ -32,7 +32,15 @@ function DeliveryPage() {
             A flat delivery charge of <strong>₹40</strong> will be applied to all orders. Shipping costs are calculated at checkout based on your order value, weight, and delivery location. We occasionally offer free shipping promotions, so keep an eye on our announcements!
           </p>
 
-          <h3 className='text-2xl font-semibold text-gray-900 mb-4 mt-6'>4. Tracking Your Order</h3>
+          {/* --- NEW SECTION for COD Convenience Fee --- */}
+          <h3 className='text-2xl font-semibold text-gray-900 mb-4 mt-6'>4. Cash on Delivery (COD) Convenience Fee</h3>
+          <p className='text-gray-700 leading-relaxed'>
+            For all Cash on Delivery (COD) orders, a non-refundable convenience fee of <strong>₹100</strong> will be applied at checkout. This fee covers the additional handling and processing costs associated with COD payments. 
+            <br/><br/>
+            To avoid this charge, we encourage you to use our secure online payment options.
+          </p>
+
+          <h3 className='text-2xl font-semibold text-gray-900 mb-4 mt-6'>5. Tracking Your Order</h3>
           <p className='text-gray-700 leading-relaxed'>
             Once your order has been shipped, you will receive a shipping confirmation email containing your tracking number and a link to track your package directly. You can also visit our <Link to="/help-center" className="text-[#d97706] hover:underline">Help Center</Link> for more information on tracking.
           </p>

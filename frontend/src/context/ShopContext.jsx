@@ -13,12 +13,23 @@ function ShopContext({ children }) {
     const [products, setProducts] = useState([]);
     const [cartItem, setCartItem] = useState({});
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [showSearch, setShowSearch] = useState(false);
     const [loading, setLoading] = useState(false);
     const [cartCount, setCartCount] = useState(0);
+    const [isCartOpen, setIsCartOpen] = useState(false);
     
     const currency = '₹';
     const delivery_fee = 40;
+
+    useEffect(() => {
+        const timerId = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => {
+            clearTimeout(timerId);
+        };
+    }, [search]);
 
     useEffect(() => {
         const getProducts = async () => {
@@ -42,16 +53,11 @@ function ShopContext({ children }) {
                 const result = await axios.post(`${serverUrl}/api/cart/get`, {}, { withCredentials: true });
                 setCartItem(result.data || {});
             } catch (error) {
-                console.log("Could not fetch user cart. It may be empty or new.");
                 setCartItem({});
             }
         };
-
-        if (userData) {
-            getUserCart();
-        } else {
-            setCartItem({});
-        }
+        if (userData) getUserCart();
+        else setCartItem({});
     }, [userData, serverUrl]);
 
     useEffect(() => {
@@ -60,9 +66,7 @@ function ShopContext({ children }) {
             for (const item of Object.values(cartItem)) {
                 if (item && typeof item === 'object') {
                     for (const quantity of Object.values(item)) {
-                        if (typeof quantity === 'number') {
-                            total += quantity;
-                        }
+                        if (typeof quantity === 'number') total += quantity;
                     }
                 }
             }
@@ -70,37 +74,27 @@ function ShopContext({ children }) {
         setCartCount(total);
     }, [cartItem]);
 
-
     const addToCart = async (itemId, size) => {
         const product = products.find(p => p._id === itemId);
-        if (!product) {
-            toast.error("Could not find product details.");
-            return;
-        }
-
+        if (!product) return;
         if (product.category === 'Men' && !size) {
             toast.error("Please select a size for this item.");
             return;
         }
-
         const cartKey = product.category === 'Men' ? size : 'default';
-
         setCartItem(prevCart => {
             const newCart = JSON.parse(JSON.stringify(prevCart));
             const currentQty = newCart[itemId]?.[cartKey] || 0;
-            if (!newCart[itemId]) {
-                newCart[itemId] = {};
-            }
+            if (!newCart[itemId]) newCart[itemId] = {};
             newCart[itemId][cartKey] = currentQty + 1;
             return newCart;
         });
-
+        setIsCartOpen(true);
         if (userData) {
             try {
                 await axios.post(`${serverUrl}/api/cart/add`, { itemId, size: cartKey }, { withCredentials: true });
             } catch (error) {
-                toast.error("Failed to save cart. Please refresh.");
-                console.error("❌ Failed to sync 'add to cart':", error);
+                toast.error("Failed to save cart.");
             }
         }
     };
@@ -112,25 +106,17 @@ function ShopContext({ children }) {
             if (newCart[itemId]?.[size] !== undefined) {
                 if (quantity === 0) {
                     delete newCart[itemId][size];
-                    if (Object.keys(newCart[itemId]).length === 0) {
-                        delete newCart[itemId];
-                    }
+                    if (Object.keys(newCart[itemId]).length === 0) delete newCart[itemId];
                 } else {
                     newCart[itemId][size] = quantity;
                 }
             }
             return newCart;
         });
-
         if (userData) {
             try {
-                // IMPORTANT: The "404 Not Found" error means your backend server
-                // does not have an API endpoint at "/api/cart/update".
-                // You must create a POST route for this path in your backend code
-                // for this function to work.
                 await axios.post(`${serverUrl}/api/cart/update`, { itemId, size, quantity }, { withCredentials: true });
             } catch (error) {
-                console.log("Update quantity failed. Check backend route.", error);
                 toast.error("Could not update item quantity.");
             }
         }
@@ -151,6 +137,12 @@ function ShopContext({ children }) {
         return totalAmount;
     };
 
+    // --- 1. The new clearCart function ---
+    // This function resets the cartItem state to an empty object.
+    const clearCart = () => {
+        setCartItem({});
+    };
+
     const contextValue = {
         products,
         cartItem,
@@ -159,12 +151,18 @@ function ShopContext({ children }) {
         getCartAmount,
         search,
         setSearch,
+        debouncedSearch,
         showSearch,
         setShowSearch,
         loading,
         currency,
         delivery_fee,
         getCartCount: cartCount,
+        isCartOpen,
+        setIsCartOpen,
+        // --- 2. Add clearCart to the context value ---
+        // This makes it available to other components like PlaceOrder.jsx
+        clearCart
     };
 
     return (

@@ -12,7 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Nav from './component/Nav';
 import { userDataContext } from './context/UserContext';
 
-// Import your customer service pages
+// Import your pages
 import FAQPage from './pages/FAQPage';
 import ReturnsPage from './pages/ReturnsPage';
 import ShippingPage from './pages/ShippingPage';
@@ -21,21 +21,41 @@ import HelpCenterPage from './pages/HelpCenterPage';
 import DeliveryPage from './pages/DeliveryPage';
 import TermsPage from './pages/TermsPage';
 import ProductDetail from './pages/ProductDetail';
-// --- FIX: Import the Cart component ---
-import Cart from './pages/Cart'; // Make sure this path is correct
+import Cart from './pages/Cart'; 
+import CartSidePanel from './pages/CartSidePanel';
+import PlaceOrder from './pages/PlaceOrder';
+import Order from './pages/Order'; 
+import OrderDetail from './pages/OrderDetail';
+
+// A simple loading component to show while we check auth
+const LoadingScreen = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#fff' }}>
+    <p>Loading...</p>
+  </div>
+);
+
 
 const AppContent = () => {
   const location = useLocation();
-  const { userData } = useContext(userDataContext);
+  // --- UPDATED: Get both userData and the new loading state ---
+  const { userData, loading } = useContext(userDataContext);
 
   const ProtectedRoute = ({ children }) => {
+    // This logic now runs only AFTER the initial loading is false
     return userData ? children : <Navigate to="/login" state={{ from: location.pathname }} />;
   };
+
+  // --- UPDATED: Wait for the initial auth check to complete ---
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <>
       <ToastContainer />
       {userData && <Nav />}
+      
+      {userData && <CartSidePanel />}
 
       <Routes>
         {/* Public Routes */}
@@ -55,9 +75,10 @@ const AppContent = () => {
         <Route path='/product' element={<ProtectedRoute><Product /></ProtectedRoute>} />
         <Route path='/contact' element={<ProtectedRoute><Contact /></ProtectedRoute>} />
         <Route path='/productdetail/:id' element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
-        
-        {/* --- FIX: Add the route for the Cart page --- */}
         <Route path='/cart' element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path='/checkout' element={<ProtectedRoute><PlaceOrder /></ProtectedRoute>} />
+        <Route path='/order' element={<ProtectedRoute><Order /></ProtectedRoute>} />
+        <Route path='/order/:id' element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
 
         {/* Customer Service and Policy Pages */}
         <Route path='/faq' element={<ProtectedRoute><FAQPage /></ProtectedRoute>} />

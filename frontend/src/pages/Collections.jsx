@@ -11,8 +11,7 @@ function Collections() {
         "Lifestyle": ["Spects", "Travel-wear", "Caps"]
     };
 
-    const [showFilter, setShowFilter] = useState(false);
-    // --- FIX: Use 'debouncedSearch' for filtering, remove 'search' ---
+    const [showFilter, setShowFilter] = useState(window.innerWidth > 768);
     const { products, debouncedSearch, showSearch } = useContext(shopDataContext);
     const [filteredAndSortedProducts, setFilteredAndSortedProducts] = useState([]);
     const [selectedCategories, setSelectedCategories] = useState([]);
@@ -20,6 +19,9 @@ function Collections() {
     const [sortType, setSortType] = useState("relevant");
 
     const getSubCategoriesForDisplay = () => {
+        if (selectedCategories.length === 0) {
+            return [];
+        }
         const allSubCategories = new Set();
         selectedCategories.forEach(cat => {
             const subs = categoryOptions[cat] || [];
@@ -33,7 +35,6 @@ function Collections() {
     useEffect(() => {
         let currentProducts = products ? [...products] : [];
 
-        // --- FIX: Filtering is now based on the debounced value ---
         if (showSearch && debouncedSearch) {
             const lowercasedSearch = debouncedSearch.toLowerCase();
             currentProducts = currentProducts.filter(item =>
@@ -58,37 +59,30 @@ function Collections() {
         }
 
         setFilteredAndSortedProducts(currentProducts);
-    // --- FIX: Dependency array now watches 'debouncedSearch' ---
     }, [products, selectedCategories, selectedSubCategories, sortType, debouncedSearch, showSearch]);
 
     useEffect(() => {
         setSelectedSubCategories(prevSubCats => {
             const validSubCategories = prevSubCats.filter(subCat => {
-                for (const categoryName in categoryOptions) {
-                    if (categoryOptions[categoryName].includes(subCat)) {
-                        return selectedCategories.includes(categoryName);
-                    }
-                }
-                return false;
+                return selectedCategories.some(selCat => (categoryOptions[selCat] || []).includes(subCat));
             });
-            if (JSON.stringify(validSubCategories) !== JSON.stringify(prevSubCats)) {
-                return validSubCategories;
-            }
-            return prevSubCats;
+            return validSubCategories.length === prevSubCats.length ? prevSubCats : validSubCategories;
         });
     }, [selectedCategories]);
 
-    const handleCategoryChange = (event) => {
-        const { value, checked } = event.target;
+    const handleCategoryChange = (category) => {
         setSelectedCategories(prev =>
-            checked ? [...prev, value] : prev.filter(cat => cat !== value)
+            prev.includes(category)
+                ? prev.filter(cat => cat !== category)
+                : [...prev, category]
         );
     };
 
-    const handleSubCategoryChange = (event) => {
-        const { value, checked } = event.target;
+    const handleSubCategoryChange = (subCategory) => {
         setSelectedSubCategories(prev =>
-            checked ? [...prev, value] : prev.filter(subCat => subCat !== value)
+            prev.includes(subCategory)
+                ? prev.filter(subCat => subCat !== subCategory)
+                : [...prev, subCategory]
         );
     };
 
@@ -97,85 +91,87 @@ function Collections() {
     };
 
     return (
-        <div className='w-full min-h-[100vh] bg-gradient-to-r from-[#f3d9c8] to-[#e8cbb3] pt-[70px] overflow-x-hidden z-[2] pb-[70px]'>
+        <div className='w-full min-h-screen bg-gradient-to-r from-[#f3d9c8] to-[#e8cbb3] pt-[70px] overflow-x-hidden z-[2] pb-[70px]'>
+            {/* Google Font for the Title */}
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+            <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
+
             <div className="flex flex-col md:grid md:grid-cols-[30vw_1fr] lg:grid-cols-[20vw_1fr] min-h-[calc(100vh-70px)]">
                 {/* Filters Sidebar */}
-                <div className={`w-full md:min-h-[100vh] ${showFilter ? "h-auto" : "h-[8vh]"} p-[20px] border-r-[1px] border-[#141414] text-[#0b0c28] transition-all duration-300 ease-in-out overflow-hidden md:overflow-visible`}>
-                    <p className='text-[25px] font-semibold flex gap-[5px] items-center justify-start cursor-pointer ' onClick={() => setShowFilter(prev => !prev)}>
+                <div className={`w-full md:min-h-screen p-5 border-r-[1px] border-[#141414] text-[#0b0c28] transition-all duration-300 ease-in-out md:block ${showFilter ? "h-auto" : "h-auto overflow-hidden"}`}>
+                    <p className='text-2xl font-semibold flex gap-2 items-center justify-between cursor-pointer' onClick={() => setShowFilter(prev => !prev)}>
                         FILTERS
-                        {!showFilter && <FaChevronRight className='text-[18px] md:hidden ' />}
-                        {showFilter && <FaChevronDown className='text-[18px] md:hidden' />}
+                        <span className='md:hidden'>
+                            {showFilter ? <FaChevronDown className='text-lg' /> : <FaChevronRight className='text-lg' />}
+                        </span>
                     </p>
-                    <div className={`border-[2px] border-[#141414] pl-5 py-3 mt-6 rounded-md bg-[#e6b892] ${showFilter ? "" : "hidden"} md:block`}>
-                        <p className='text-[18px] text-[#180f0f] font-semibold'>CATEGORIES</p>
-                        <div className='w-full flex items-start justify-center gap-[10px] flex-col mt-2'>
-                            {Object.keys(categoryOptions).map((cat) => (
-                                <label key={cat} className='flex items-center gap-[10px] text-[16px] font-light cursor-pointer'>
-                                    <input
-                                        type="checkbox"
-                                        value={cat}
-                                        className='w-4 h-4 accent-[#d97706]'
-                                        checked={selectedCategories.includes(cat)}
-                                        onChange={handleCategoryChange}
-                                    />
-                                    {cat}
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-                    {selectedCategories.length > 0 && (
-                        <div className={`border-[2px] border-[#141414] pl-5 py-3 mt-6 rounded-md bg-[#e6b892] ${showFilter ? "" : "hidden"} md:block`}>
-                            <p className='text-[18px] text-[#180f0f] font-semibold'>
-                                SUB-CATEGORIES ({selectedCategories.join(', ')})
-                            </p>
-                            <div className='w-full flex items-start justify-center gap-[10px] flex-col mt-2'>
-                                {subCategoriesToDisplay.map((subCat) => (
-                                    <label key={subCat} className='flex items-center gap-[10px] text-[16px] font-light cursor-pointer'>
-                                        <input
-                                            type="checkbox"
-                                            value={subCat}
-                                            className='w-4 h-4 accent-[#d97706]'
-                                            checked={selectedSubCategories.includes(subCat)}
-                                            onChange={handleSubCategoryChange}
-                                        />
-                                        {subCat}
-                                    </label>
+                    <div className={`mt-6 space-y-6 ${showFilter ? "block" : "hidden"} md:block`}>
+                        <div className="border-[2px] border-[#141414] p-4 rounded-lg bg-[#e6b892]">
+                            <p className='text-lg text-[#180f0f] font-semibold mb-3'>CATEGORIES</p>
+                            <div className='w-full flex flex-col items-start gap-2'>
+                                {Object.keys(categoryOptions).map((cat) => (
+                                    <div
+                                        key={cat}
+                                        onClick={() => handleCategoryChange(cat)}
+                                        className={`w-full text-left px-3 py-2 rounded-md cursor-pointer transition-colors duration-200 text-sm font-medium ${selectedCategories.includes(cat) ? 'bg-[#82664e] text-white' : 'hover:bg-[#dbac83]'}`}
+                                    >
+                                        {cat}
+                                    </div>
                                 ))}
                             </div>
                         </div>
-                    )}
+                        {selectedCategories.length > 0 && (
+                            <div className="border-[2px] border-[#141414] p-4 rounded-lg bg-[#e6b892]">
+                                <p className='text-lg text-[#180f0f] font-semibold mb-3'>
+                                    SUB-CATEGORIES
+                                </p>
+                                <div className='w-full flex flex-col items-start gap-2'>
+                                    {subCategoriesToDisplay.map((subCat) => (
+                                        <div
+                                            key={subCat}
+                                            onClick={() => handleSubCategoryChange(subCat)}
+                                            className={`w-full text-left px-3 py-2 rounded-md cursor-pointer transition-colors duration-200 text-sm font-medium ${selectedSubCategories.includes(subCat) ? 'bg-[#82664e] text-white' : 'hover:bg-[#dbac83]'}`}
+                                        >
+                                            {subCat}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Product Display Area */}
                 <div className='w-full p-4'>
-                    <div className='w-full p-[20] flex justify-between flex-col lg:flex-row lg:px-[50px]'>
-                        <Title text1={"ALL"} text2={"COLLECTIONS"} />
-                        <div className="relative inline-block w-[60%] md:w-[200px] mt-4 lg:mt-0">
+                    <div className='w-full p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4'>
+                        <div className='self-start' style={{ fontFamily: "'Playfair Display', serif" }}>
+                             <Title text1={"ALL"} text2={"COLLECTIONS"} />
+                        </div>
+                        <div className="relative w-full sm:w-auto">
                             <select
                                 name="sortBy"
                                 id="sortBy"
-                                className='block appearance-none w-full h-[50px] px-[10px] py-2 bg-[#e6b892] text-[#141414] font-small rounded-lg border-2 border-[#828080] hover:border-[#d97706] focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:ring-opacity-50 shadow-sm cursor-pointer transition-all duration-200 ease-in-out pr-10'
+                                className='block appearance-none w-full sm:w-[200px] h-10 px-3 text-sm bg-[#e6b892] text-[#180f0f] font-medium rounded-lg border-2 border-[#141414] hover:bg-[#dbac83] hover:border-[#82664e] focus:outline-none focus:ring-2 focus:ring-[#82664e]/50 cursor-pointer transition-all duration-300 pr-8'
                                 value={sortType}
                                 onChange={handleSortChange}
                             >
                                 <option value="relevant">Sort By: Relevant</option>
-                                <option value="low-high">Sort By: Low to High</option>
-                                <option value="high-low">Sort By: High to Low</option>
+                                <option value="low-high">Price: Low to High</option>
+                                <option value="high-low">Price: High to Low</option>
                             </select>
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#141414]">
-                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                                </svg>
+                                <FaChevronDown className="h-4 w-4" />
                             </div>
                         </div>
                     </div>
-                    <div className='w-full grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 items-start p-4'>
+                    <div className='w-full grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 p-4'>
                         {filteredAndSortedProducts.length > 0 ? (
                             filteredAndSortedProducts.map((item) => (
                                 <Card
                                     key={item._id}
                                     name={item.name}
-                                    image1={item.image1} 
+                                    image1={item.image1}
                                     image3={item.image3}
                                     id={item._id}
                                     price={item.price}
@@ -186,6 +182,16 @@ function Collections() {
                         ) : (
                             <p className="text-gray-500 text-center text-xl col-span-full mt-10">No products found matching your filters.</p>
                         )}
+                    </div>
+
+                    {/* --- NEW: Concluding Paragraph --- */}
+                    <div className="w-full text-center px-4 md:px-8 py-10 mt-8">
+                        <h3 className="text-2xl text-[#5a4a42] font-semibold mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+                            Discover Your Signature Style
+                        </h3>
+                        <p className="text-[#6d5b5b] max-w-3xl mx-auto leading-relaxed">
+                            Our collections are more than just clothing and gear; they are a statement of individuality. Each piece is thoughtfully curated to blend timeless design with modern functionality. Whether you're updating your wardrobe, gearing up for an adventure, or finding that perfect accessory, you'll find quality and style in every item. Explore the possibilities and let your journey begin with us.
+                        </p>
                     </div>
                 </div>
             </div>
