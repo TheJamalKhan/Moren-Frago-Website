@@ -153,7 +153,7 @@ function Nav() {
                         <li className="flex items-center gap-4 py-3 px-4 hover:bg-[#333] rounded-lg cursor-pointer" onClick={() => { navigate('/about'); setIsMobileMenuOpen(false); }}>
                             <AiOutlineInfoCircle /> About
                         </li>
-                        <li className="flex items-center gap-4 py-3 px-4 hover:bg-[#333] rounded-lg cursor-pointer" onClick={() => { navigate('/help'); setIsMobileMenuOpen(false); }}>
+                        <li className="flex items-center gap-4 py-3 px-4 hover:bg-[#333] rounded-lg cursor-pointer" onClick={() => { navigate('/help-center'); setIsMobileMenuOpen(false); }}>
                             <FiHelpCircle /> Help Center
                         </li>
                         <li className="flex items-center gap-4 py-3 px-4 mt-auto hover:bg-[#333] rounded-lg cursor-pointer" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
