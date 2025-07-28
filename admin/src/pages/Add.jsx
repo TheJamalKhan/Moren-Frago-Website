@@ -24,20 +24,16 @@ function Add() {
 
   const [category, setCategory] = useState("Men");
   const [subCategory, setSubCategory] = useState(categoryOptions["Men"][0]);
-
   const [price, setPrice] = useState("");
   const [mrp, setMrp] = useState("");
   const [discountPercentage, setDiscountPercentage] = useState(0);
-
   const [bestseller, setBestSeller] = useState(false);
   const [sizes, setSizes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  let { serverUrl } = useContext(authDataContext);
+  const { serverUrl } = useContext(authDataContext);
 
-  const getSubCategories = (selectedCategory) => {
-    return categoryOptions[selectedCategory] || [];
-  };
+  const getSubCategories = (selectedCategory) => categoryOptions[selectedCategory] || [];
 
   const handleCategoryChange = (e) => {
     const newCategory = e.target.value;
@@ -45,12 +41,11 @@ function Add() {
     setSubCategory(getSubCategories(newCategory)[0] || "");
   };
 
-  const calculateDiscount = (currentMrp, currentPrice) => {
-    const mrpValue = parseFloat(currentMrp);
-    const priceValue = parseFloat(currentPrice);
-
-    if (mrpValue > 0 && priceValue > 0 && priceValue < mrpValue) {
-      const discount = ((mrpValue - priceValue) / mrpValue) * 100;
+  const calculateDiscount = (mrp, price) => {
+    const mrpVal = parseFloat(mrp);
+    const priceVal = parseFloat(price);
+    if (mrpVal > 0 && priceVal > 0 && priceVal < mrpVal) {
+      const discount = ((mrpVal - priceVal) / mrpVal) * 100;
       setDiscountPercentage(Math.round(discount));
     } else {
       setDiscountPercentage(0);
@@ -58,21 +53,18 @@ function Add() {
   };
 
   const handlePriceChange = (e) => {
-    const newPrice = e.target.value;
-    setPrice(newPrice);
-    calculateDiscount(mrp, newPrice);
+    setPrice(e.target.value);
+    calculateDiscount(mrp, e.target.value);
   };
 
   const handleMrpChange = (e) => {
-    const newMrp = e.target.value;
-    setMrp(newMrp);
-    calculateDiscount(newMrp, price);
+    setMrp(e.target.value);
+    calculateDiscount(e.target.value, price);
   };
 
   const handleAddProduct = async (e) => {
-    setLoading(true);
     e.preventDefault();
-
+    setLoading(true);
     try {
       let formData = new FormData();
       formData.append("name", name);
@@ -88,216 +80,130 @@ function Add() {
       if (image2) formData.append("image2", image2);
       if (image3) formData.append("image3", image3);
       if (image4) formData.append("image4", image4);
-        console.log(formData)
-      let result = await axios.post(serverUrl + "/api/product/addproduct", formData, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-        
-      console.log("API Response:", result.data);
-      toast.success("ADD Product Successfully");
-      setLoading(false);
 
-      if (result.data) {
-        setName("");
-        setDescription("");
-        setImage1(null);
-        setImage2(null);
-        setImage3(null);
-        setImage4(null);
-        setPrice("");
-        setMrp("");
-        setDiscountPercentage(0);
-        setBestSeller(false);
-        setCategory("Men");
-        setSubCategory(categoryOptions["Men"][0]);
-        setSizes([]);
-      }
+      const result = await axios.post(serverUrl + "/api/product/addproduct", formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      toast.success("Product added successfully!");
+      setName("");
+      setDescription("");
+      setImage1(null); setImage2(null); setImage3(null); setImage4(null);
+      setPrice(""); setMrp(""); setDiscountPercentage(0); setBestSeller(false);
+      setCategory("Men"); setSubCategory(categoryOptions["Men"][0]); setSizes([]);
     } catch (error) {
-      console.log("Add Product Failed:", error);
-      setLoading(false);
+      console.error("Add Product Failed:", error);
       toast.error("Add Product Failed: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className='w-[100vw] min-h-screen bg-gradient-to-b from-[#fbeee6] via-[#f3d9c8] to-[#e8cbb3] text-[white] overflow-x-hidden relative'>
+    <div className="bg-gradient-to-b from-[#fbeee6] via-[#f3d9c8] to-[#e8cbb3] min-h-screen">
       <Nav />
-      <Sidebar />
-
-      <div className='w-[82%] h-full flex items-start justify-start overflow-y-auto absolute right-0'>
-
-        <form onSubmit={handleAddProduct} className='w-[100%] md:w-[90%] mt-[70px] flex flex-col gap-[30px] py-[90px] px-[30px] md:px-[60px]'>
-          <div className='w-[400px] h-[50px] text-[25px] md:text-[40px] text-black'>Add Product Page</div>
-
-          <div className='w-[80%] h-[130px] flex items-start justify-center flex-col mt-[20px] gap-[10px]'>
-            <p className='text-[20px] text-[black] md:text-[25px] font-semibold'>
-              Upload Images
-            </p>
-            <div className='w-[100%] h-[100%] flex items-center justify-start'>
-              <label htmlFor="image1" className='w-[65px] h-[65px] md:w-[100px] md:h-[100px] cursor-pointer hover:border-black'>
-                <img src={image1 ? URL.createObjectURL(image1) : upload} alt="Upload Image 1" className='w-[80%] h-[80%] object-cover rounded-lg shadow-2xl hover:border-black border-[2px] border-black' />
-                <input type="file" id='image1' hidden onChange={event => setImage1(event.target.files[0])} required />
-              </label>
-
-              <label htmlFor="image2" className='w-[65px] h-[65px] md:w-[100px] md:h-[100px] cursor-pointer hover:border-black'>
-                <img src={image2 ? URL.createObjectURL(image2) : upload} alt="Upload Image 2" className='w-[80%] h-[80%] object-cover rounded-lg shadow-2xl hover:border-black border-[2px] border-black' />
-                <input type="file" id='image2' hidden onChange={event => setImage2(event.target.files[0])} required />
-              </label>
-
-              <label htmlFor="image3" className='w-[65px] h-[65px] md:w-[100px] md:h-[100px] cursor-pointer hover:border-black'>
-                <img src={image3 ? URL.createObjectURL(image3) : upload} alt="Upload Image 3" className='w-[80%] h-[80%] object-cover rounded-lg shadow-2xl hover:border-black border-[2px] border-black' />
-                <input type="file" id='image3' hidden onChange={event => setImage3(event.target.files[0])} required />
-              </label>
-
-              <label htmlFor="image4" className='w-[65px] h-[65px] md:w-[100px] md:h-[100px] cursor-pointer hover:border-black'>
-                <img src={image4 ? URL.createObjectURL(image4) : upload} alt="Upload Image 4" className='w-[80%] h-[80%] object-cover rounded-lg shadow-2xl hover:border-black border-[2px] border-black' />
-                <input type="file" id='image4' hidden onChange={event => setImage4(event.target.files[0])} required />
-              </label>
-            </div>
-          </div>
-
-          <div className='w-[80%] h-[100px] flex items-start justify-center flex-col gap-[10px]'>
-            <p className='text-[20px] text-[black] md:text-[25px] font-semibold'>
-              Product Name
-            </p>
-            <input
-              type="text"
-              placeholder='Type here'
-              className='w-[600px] max-w-[98%] h-[40px] rounded-lg hover:border-black border-[2px] border-black cursor-pointer bg-slate-600 px-[20px] text-[18px] placeholder:text-[#ffffffc2]'
-              onChange={(e) => setName(e.target.value)}
-              value={name}
-              required
-            />
-          </div>
-
-          <div className='w-[80%] flex items-start justify-center flex-col gap-[10px]'>
-            <p className='text-[20px] text-[black] md:text-[25px] font-semibold'>
-              Product Description
-            </p>
-            <textarea
-              placeholder='Type here'
-              className='w-[600px] max-w-[98%] h-[100px] rounded-lg hover:border-black border-[2px] border-black cursor-pointer bg-slate-600 px-[20px] py-[10px] text-[18px] placeholder:text-[#ffffffc2]'
-              onChange={(e) => setDescription(e.target.value)}
-              value={description}
-              required
-            />
-          </div>
-
-          <div className='w-[80%] flex items-center gap-[10px] flex-wrap'>
-            <div className='md:w-[30%] w-[100%] flex items-start sm:justify-center flex-col gap-[10px]'>
-              <p className='text-[20px] text-[black] md:text-[25px] font-semibold w-[100%]'>Product Category</p>
-              <select
-                name="category"
-                id="category"
-                className='bg-slate-600 w-[60%] px-[10px] py-[7px] rounded-lg hover:border-black border-[2px] border-black'
-                onChange={handleCategoryChange}
-                value={category}
-              >
-                {Object.keys(categoryOptions).map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className='md:w-[30%] w-[100%] flex items-start sm:justify-center flex-col gap-[10px]'>
-              <p className='text-[20px] text-[black] md:text-[25px] font-semibold w-[100%]'>Sub-Category</p>
-              <select
-                name="subCategory"
-                id="subCategory"
-                className='bg-slate-600 w-[60%] px-[10px] py-[7px] rounded-lg hover:border-black border-[2px] border-black'
-                onChange={(e) => setSubCategory(e.target.value)}
-                value={subCategory}
-              >
-                {getSubCategories(category).map((subCat) => (
-                  <option key={subCat} value={subCat}>{subCat}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className='md:w-[30%] w-[100%] flex items-start sm:justify-center flex-col gap-[10px]'>
-              <p className='text-[20px] text-[black] md:text-[25px] font-semibold w-[100%]'>Add to BestSeller</p>
-              <input
-                type="checkbox"
-                id='checkbox'
-                checked={bestseller}
-                onChange={() => setBestSeller(prev => !prev)}
-                className='w-[25px] h-[25px] cursor-pointer'
-              />
-            </div>
-          </div>
-
-          <div className='w-[80%] h-[100px] flex items-start justify-center flex-col gap-[10px]'>
-            <p className='text-[20px] text-[black] md:text-[25px] font-semibold'>
-              MRP Price
-            </p>
-            <input
-              type="number"
-              placeholder='₹ 3000 (MRP)'
-              className='w-[600px] max-w-[98%] h-[40px] rounded-lg hover:border-black border-[2px] border-black cursor-pointer bg-slate-600 px-[20px] text-[18px] placeholder:text-[#ffffffc2]'
-              onChange={handleMrpChange}
-              value={mrp}
-              required
-            />
-          </div>
-
-          <div className='w-[80%] h-[100px] flex items-start justify-center flex-col gap-[10px]'>
-            <p className='text-[20px] text-[black] md:text-[25px] font-semibold'>
-              Product Price
-            </p>
-            <input
-              type="number"
-              placeholder='₹ 2000 (Selling Price)'
-              className='w-[600px] max-w-[98%] h-[40px] rounded-lg hover:border-black border-[2px] border-black cursor-pointer bg-slate-600 px-[20px] text-[18px] placeholder:text-[#ffffffc2]'
-              onChange={handlePriceChange}
-              value={price}
-              required
-            />
-            {mrp > 0 && price > 0 && mrp > price && (
-              <p className='text-[18px] text-green-700 font-medium mt-2'>
-                Discount: {discountPercentage}% Off
-              </p>
-            )}
-          </div>
-
-          <div className='w-[80%] h-[220px] md:h-[100px] flex items-start justify-center flex-col gap-[10px] py-[10px] md:py-[0px]'>
-            <p className='text-[20px] text-[black] md:text-[25px] font-semibold'>Product Size</p>
-            <div className='flex items-center justify-start gap-[15px] flex-wrap'>
-              {["S", "M", "L", "XL", "XXL"].map(size => (
-                <div
-                  key={size}
-                  className={`px-[20px] py-[7px] rounded-lg bg-slate-600 text-[18px] hover:border-black border-[2px] ${sizes.includes(size) ? "bg-green-400 text-black border-black" : "border-black"} cursor-pointer`}
-                  onClick={() => setSizes(prev => prev.includes(size) ? prev.filter(item => item !== size) : [...prev, size])}
-                >
-                  {size}
+      <div className="flex h-screen pt-[70px]">
+        <div className="w-64 flex-shrink-0 hidden md:block">
+          <Sidebar />
+        </div>
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+          <div className="w-full bg-[#e2b07e] backdrop-blur-lg rounded-2xl shadow-lg p-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#4A2E2A] mb-6">Add New Product</h1>
+            <form onSubmit={handleAddProduct} className="space-y-6 text-[#4A2E2A]">
+              {/* Image Upload */}
+              <div>
+                <label className="font-semibold text-lg block mb-2">Upload Images</label>
+                <div className="flex gap-4 flex-wrap">
+                  {[image1, image2, image3, image4].map((img, idx) => (
+                    <label key={idx} className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] cursor-pointer">
+                      <img src={img ? URL.createObjectURL(img) : upload} alt="upload" className="w-full h-full object-cover rounded-lg border-2 border-black" />
+                      <input hidden type="file" onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (idx === 0) setImage1(file);
+                        else if (idx === 1) setImage2(file);
+                        else if (idx === 2) setImage3(file);
+                        else setImage4(file);
+                      }} required />
+                    </label>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          <button
-            type="submit"
-            className='
-             w-[140px]
-               px-[20px] py-[20px]
-               rounded-xl
-               bg-[#333333]
-               hover:bg-[#c4b080]
-               transition-colors duration-300 ease-in-out
-               flex items-center justify-center gap-[10px]
-               text-white
-                hover:text-black
-                hover:border-[1px]
-               active:bg-slate-700
-               cursor-pointer
-               disabled:opacity-70
-               disabled:cursor-not-allowed'
-                disabled={loading}>
-            {loading ? <Loading /> : "Add Product"}
-          </button>
-        </form>
+              {/* Product Name */}
+              <div>
+                <label className="block font-semibold mb-1">Product Name</label>
+                <input type="text" className="w-full p-2 border-2 border-black rounded-md bg-white" placeholder="Type here" value={name} onChange={(e) => setName(e.target.value)} required />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block font-semibold mb-1">Product Description</label>
+                <textarea className="w-full p-2 border-2 border-black rounded-md bg-white" placeholder="Enter description" value={description} onChange={(e) => setDescription(e.target.value)} required />
+              </div>
+
+              {/* Category & Subcategory */}
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block font-semibold mb-1">Category</label>
+                  <select className="w-full p-2 border-2 border-black rounded-md bg-white" value={category} onChange={handleCategoryChange}>
+                    {Object.keys(categoryOptions).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Sub-Category</label>
+                  <select className="w-full p-2 border-2 border-black rounded-md bg-white" value={subCategory} onChange={(e) => setSubCategory(e.target.value)}>
+                    {getSubCategories(category).map(sub => <option key={sub} value={sub}>{sub}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 mt-6">
+                  <input type="checkbox" checked={bestseller} onChange={() => setBestSeller(!bestseller)} />
+                  <label className="font-semibold">Best Seller</label>
+                </div>
+              </div>
+
+              {/* MRP & Price */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block font-semibold mb-1">MRP</label>
+                  <input type="number" className="w-full p-2 border-2 border-black rounded-md bg-white" value={mrp} onChange={handleMrpChange} required />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Price</label>
+                  <input type="number" className="w-full p-2 border-2 border-black rounded-md bg-white" value={price} onChange={handlePriceChange} required />
+                  {discountPercentage > 0 && (
+                    <p className="text-green-700 text-sm mt-1">Discount: {discountPercentage}% OFF</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Sizes */}
+              <div>
+                <label className="block font-semibold mb-2">Sizes</label>
+                <div className="flex gap-3 flex-wrap">
+                  {["S", "M", "L", "XL", "XXL"].map(size => (
+                    <div key={size}
+                      className={`px-4 py-2 rounded-lg border-2 border-black cursor-pointer ${
+                        sizes.includes(size) ? "bg-green-400 text-black" : "bg-white"
+                      }`}
+                      onClick={() => setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}>
+                      {size}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div>
+                <button type="submit"
+                  disabled={loading}
+                  className="bg-[#333] hover:bg-[#c4b080] text-white hover:text-black px-6 py-3 rounded-lg transition duration-300 disabled:opacity-70 disabled:cursor-not-allowed">
+                  {loading ? <Loading /> : "Add Product"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </main>
       </div>
     </div>
   );

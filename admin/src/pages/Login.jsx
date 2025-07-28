@@ -4,7 +4,7 @@ import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { useState } from 'react'
 import { useContext } from 'react';
 import axios from 'axios';
-import {authDataContext} from '../context/authContext.jsx'
+import {authDataContext} from '../context/AuthContext.jsx'
 import { adminDataContext } from '../context/AdminContext.jsx';
 import { useNavigate } from 'react-router-dom';
 function Login() {

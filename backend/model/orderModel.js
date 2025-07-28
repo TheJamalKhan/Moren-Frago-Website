@@ -1,43 +1,44 @@
 import mongoose from "mongoose";
 
-
 const orderSchema = new mongoose.Schema({
+    // --- THIS IS THE CORRECTED FIELD ---
     userId: {
-        type:String,
+        type: mongoose.Schema.Types.ObjectId, // Must be ObjectId
+        ref: 'User',                         // Must have a reference to the User model
         required: true
     },
     items: {
-          type:Array,
+        type: Array,
         required: true
     },
     amount: {
-        type:Number,
+        type: Number,
         required: true
     },
     address: {
-        type:Object,
+        type: Object,
         required: true
     },
     status: {
-        type:String,
+        type: String,
         required: true,
-        default:'Order Placed'
+        default: 'Order Placed'
     },
     paymentMethod: {
-        type:String,
+        type: String,
         required: true
     },
     payment: {
-        type:Boolean,
+        type: Boolean,
         required: true,
-        default:false
+        default: false
     },
     date: {
         type: Number,
-        required:true
+        required: true
     }
-},{timestamps:true}) 
+}, { timestamps: true });
 
-const Order = mongoose.model('Order' , orderSchema)
+const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
-export default Order
+export default Order;

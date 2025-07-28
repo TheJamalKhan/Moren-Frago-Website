@@ -2,54 +2,79 @@ import Order from "../model/orderModel.js";
 import User from "../model/userModel.js";
 import Product from "../model/productModel.js";
 
+// --- NEW FUNCTION FOR ADMINS ---
 /**
- * Creates a new order, saving full item details for future display.
+ * [ADMIN] Updates the status of a specific order.
+ */
+export const updateOrderStatus = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).json({ success: false, message: "New status is required." });
+        }
+
+        const updatedOrder = await Order.findByIdAndUpdate(orderId, { status: status }, { new: true });
+
+        if (!updatedOrder) {
+            return res.status(404).json({ success: false, message: "Order not found." });
+        }
+
+        res.json({ success: true, message: "Order status updated successfully.", data: updatedOrder });
+
+    } catch (error) {
+        console.error("Update Order Status Error:", error);
+        res.status(500).json({ success: false, message: "Error updating order status." });
+    }
+};
+
+
+// --- EXISTING FUNCTIONS ---
+
+/**
+ * [ADMIN] Fetches all orders from all users.
+ */
+export const getAllOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({}).populate('userId', 'name email').sort({ date: -1 });
+        res.json({ success: true, data: orders });
+    } catch (error) {
+        console.log("Get All Orders Error:", error);
+        res.status(500).json({ success: false, message: 'Error fetching all orders' });
+    }
+};
+
+/**
+ * Creates a new order.
  */
 export const placeOrder = async (req, res) => {
     try {
         const { items, amount, address, paymentMethod } = req.body;
         const userId = req.userId;
+        if (!userId) return res.status(401).json({ success: false, message: "Authentication failed." });
 
         let orderItems = [];
-
         for (const item of items) {
-            // --- FIX 1: Check for 'item.productId' or 'item._id' ---
-            // This makes the code work even if the frontend sends '_id'.
             const productData = await Product.findById(item.productId || item._id);
-
             if (productData) {
-                // Create a new object containing all necessary details for the order history
                 orderItems.push({
                     productId: productData._id,
                     name: productData.name,
-                    // --- FIX 2: Use 'image1' from the Product model ---
                     image: productData.image1,
                     price: productData.price,
-                    quantity: item.quantity
+                    quantity: item.quantity,
+                    size: item.size
                 });
             }
         }
 
-        // Check if any items were processed successfully
         if (orderItems.length !== items.length) {
-            console.log("Could not find all products for the order.");
-            return res.status(404).json({ success: false, message: 'One or more products in the cart were not found.' });
+            return res.status(404).json({ success: false, message: 'One or more products were not found.' });
         }
 
-        const orderData = {
-            items: orderItems,
-            amount,
-            userId,
-            address,
-            paymentMethod: paymentMethod,
-            payment: false,
-            date: Date.now()
-        };
-
-        const newOrder = new Order(orderData);
+        const newOrder = new Order({ items: orderItems, amount, userId, address, paymentMethod, date: Date.now() });
         await newOrder.save();
-
-        // After successful order, clear the user's cart
         await User.findByIdAndUpdate(userId, { cartData: {} });
 
         return res.status(201).json({ success: true, message: 'Order Placed Successfully' });
@@ -64,7 +89,10 @@ export const placeOrder = async (req, res) => {
  */
 export const userOrders = async (req, res) => {
     try {
-        const orders = await Order.find({ userId: req.userId });
+        const userId = req.userId;
+        if (!userId) return res.status(401).json({ success: false, message: "Authentication failed." });
+        
+        const orders = await Order.find({ userId: userId }).sort({ date: -1 });
         res.json({ success: true, data: orders });
     } catch (error) {
         console.log("Get User Orders Error:", error);
@@ -73,20 +101,16 @@ export const userOrders = async (req, res) => {
 };
 
 /**
- * Fetches a single order by its ID, ensuring the user is authorized.
+ * Fetches a single order by its ID.
  */
 export const getOrderById = async (req, res) => {
     try {
+        const userId = req.userId;
+        if (!userId) return res.status(401).json({ success: false, message: "Authentication failed." });
+
         const order = await Order.findById(req.params.id);
-
-        if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
-        }
-
-        // Security check: Ensure the user requesting the order is the one who placed it
-        if (req.userId !== order.userId.toString()) {
-            return res.status(403).json({ success: false, message: "Unauthorized access" });
-        }
+        if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+        if (userId !== order.userId.toString()) return res.status(403).json({ success: false, message: "Unauthorized access" });
 
         res.json({ success: true, data: order });
     } catch (error) {
