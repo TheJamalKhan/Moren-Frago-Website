@@ -31,7 +31,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 app.use(cors({
-    origin: [ "https://moren-frago-website-frontend.onrender.com", "http://localhost:5174"],
+    origin: [ "https://moren-frago-website-frontend.onrender.com", "https://moren-frago-website-admin.onrender.com"],
     credentials: true
 }))
 
