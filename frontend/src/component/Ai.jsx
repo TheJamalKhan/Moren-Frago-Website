@@ -30,6 +30,30 @@ function Ai() {
   recognition.lang = 'en-US';
   recognition.interimResults = false;
 
+  // Tour Functionality
+  const startTour = async () => {
+    const pages = [
+      { path: "/", message: "Welcome to Moren Frago. Let's start the tour from the homepage." },
+      { path: "/about", message: "This is the About page. Here you learn about our mission, story, and brand vision." },
+      { path: "/collection", message: "Now, we are at the Collection page where you can explore all our latest products and categories." },
+      { path: "/cart", message: "This is your Cart. When you shop items, they appear here before checkout." },
+      { path: "/order", message: "Here's your Orders page to track everything you’ve bought." },
+      { path: "/faq", message: "In the FAQ section, you’ll find answers to frequently asked questions." },
+      { path: "/returns", message: "This is the Returns policy page. Learn how you can return items easily." },
+      { path: "/privacy-policy", message: "Our Privacy Policy page ensures transparency and data protection for users like you." },
+      { path: "/terms", message: "This is the Terms and Conditions page to understand our platform’s usage policies." },
+    ];
+
+    for (let i = 0; i < pages.length; i++) {
+      const { path, message } = pages[i];
+      navigate(path);
+      speak(message);
+      await new Promise(resolve => setTimeout(resolve, 9000)); // Wait for speech and page load
+    }
+
+    speak("That concludes your tour of Moren Frago. Feel free to explore more or ask me anything.");
+  };
+
   const commands = [
     { keywords: ["open search"], action: () => { if (!showSearch) { speak("Opening search"); setShowSearch(true); navigate("/collection"); } } },
     { keywords: ["close search"], action: () => { if (showSearch) { speak("Closing search"); setShowSearch(false); } } },
@@ -60,9 +84,9 @@ function Ai() {
     { keywords: ["instagram", "open instagram", "instagram page"], action: () => { speak("Opening Instagram."); window.open("https://www.instagram.com/morenfrago_india", "_blank"); } },
     { keywords: ["youtube", "open youtube", "youtube channel"], action: () => { speak("Opening YouTube."); window.open("https://www.youtube.com/@jamaluplifts", "_blank"); } },
 
-    // Developer introduction
+    // Developer intro
     {
-      keywords: ["who is the developer", "who made this", "who built this website", "who developed this", "who created this site", "who is the creator"],
+      keywords: ["who is the developer", "who made this", "who built this website", "who developed this", "who created this site", "who created this website", "who is jamal", "who is the creator"],
       action: () => {
         const message = `The entire Moren Frago platform is the creation of Md. Jamal Ashraf Khan,
 a dedicated full-stack developer with a passion for building robust and user-centric applications.
@@ -71,6 +95,15 @@ to the secure backend and this powerful admin panel.
 His expertise in modern web technologies and commitment to quality are the foundation of Moren Frago's digital presence.`;
         speak(message);
         toast.info("This website was developed by Md. Jamal Ashraf Khan.");
+      }
+    },
+
+    // Tour trigger
+    {
+      keywords: ["show me around", "give me a tour", "explore the website", "introduce moren frago", "take me through the website"],
+      action: () => {
+        speak("Sure. Let's take a full tour of Moren Frago.");
+        startTour();
       }
     }
   ];
