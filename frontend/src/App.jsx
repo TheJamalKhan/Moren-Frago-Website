@@ -26,6 +26,7 @@ import CartSidePanel from './pages/CartSidePanel';
 import PlaceOrder from './pages/PlaceOrder';
 import Order from './pages/Order'; 
 import OrderDetail from './pages/OrderDetail';
+import Ai from './component/Ai';
 
 // A simple loading component to show while we check auth
 const LoadingScreen = () => (
@@ -89,6 +90,7 @@ const AppContent = () => {
         <Route path='/delivery' element={<ProtectedRoute><DeliveryPage /></ProtectedRoute>} />
         <Route path='/terms' element={<ProtectedRoute><TermsPage /></ProtectedRoute>} />
       </Routes>
+      <Ai/>
     </>
   );
 }
