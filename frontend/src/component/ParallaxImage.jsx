@@ -3,44 +3,39 @@ import { useInView } from 'react-intersection-observer';
 import MorenImage from '../assets/Moren.webp';
 
 const ParallaxImage = () => {
-    // useInView for the fade-in effect of the text content
     const { ref, inView } = useInView({
-        threshold: 0.5, // The text will appear when 50% of the component is visible
+        threshold: 0.5,
         triggerOnce: false,
     });
 
     return (
-        <div
-            ref={ref}
-            // Responsive height for different screen sizes
-            className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden z-0"
-        >
-            {/* Background Image Container
-                - 'bg-fixed' is now applied universally to all screen sizes.
-                - This ensures the background image is fixed on both mobile and desktop.
-            */}
+        <div ref={ref} className="relative w-full h-screen overflow-hidden z-0">
+            {/* Background Image Layer */}
             <div
-                className="absolute inset-0 bg-cover bg-no-repeat bg-center bg-fixed"
+                className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat -z-10"
                 style={{
                     backgroundImage: `url(${MorenImage})`,
                 }}
             />
 
-            {/* Gradient Overlay to ensure text is readable */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/60"></div>
+            {/* Gradient Overlay for text clarity */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/70 pointer-events-none -z-0" />
 
-            {/* Center Content */}
+            {/* Foreground Content */}
             <div
-                className={`relative z-10 flex flex-col items-center justify-center h-full text-white text-center p-4 transition-opacity duration-300 ease-in-out ${
-                    inView ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                className={`relative z-10 flex flex-col items-center justify-center h-full text-white text-center px-4 transition-opacity duration-500 ease-in-out ${
+                    inView ? 'opacity-100' : 'opacity-0'
                 }`}
             >
-                {/* Responsive text and button sizes for a better mobile experience */}
-                <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold max-w-2xl">Be the real MFs.</h2>
-                <p className="mt-2 text-md sm:text-lg max-w-lg">Born from grit. Styled for legends.</p>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold max-w-[90%] md:max-w-2xl leading-tight">
+                    Be the real MFs.
+                </h2>
+                <p className="mt-3 text-sm sm:text-base md:text-lg max-w-md leading-relaxed">
+                    Born from grit. Styled for legends.
+                </p>
                 <a
                     href="/collection"
-                    className="mt-6 px-8 py-3 bg-white text-black text-sm sm:text-base font-semibold rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105"
+                    className="mt-6 px-6 py-3 text-sm sm:text-base bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105"
                 >
                     EXPLORE NOW
                 </a>

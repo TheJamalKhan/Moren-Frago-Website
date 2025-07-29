@@ -12,4 +12,5 @@ productRoutes.post("/addproduct",upload.fields([
  
      productRoutes.get("/list", listProduct)
      productRoutes.post("/remove/:id",adminAuth,removeProduct)
+     
 export default productRoutes

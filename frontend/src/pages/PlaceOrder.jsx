@@ -11,7 +11,7 @@ const indianStates = [
 
 const PlaceOrder = () => {
     const { products, cartItem, getCartCount, currency, delivery_fee, clearCart } = useContext(shopDataContext);
-    const { serverUrl } = useContext(authDataContext);
+    const { serverUrl, user } = useContext(authDataContext);
     const navigate = useNavigate();
 
     const [shippingDetails, setShippingDetails] = useState({
@@ -43,17 +43,15 @@ const PlaceOrder = () => {
         const isFreeDelivery = subtotal >= 1500;
         let totalBeforeCod = (isFreeDelivery ? subtotal : subtotal + delivery_fee) - couponDiscount;
         
-        const finalTotal = paymentMethod === 'cod' ? totalBeforeCod + codFee : totalBeforeCod;
+        const finalTotalValue = paymentMethod === 'cod' ? totalBeforeCod + codFee : totalBeforeCod;
 
-        return { subtotal, couponDiscount, isFreeDelivery, finalTotal };
+        return { subtotal, couponDiscount, isFreeDelivery, finalTotal: finalTotalValue };
     }, [cartItem, products, delivery_fee, paymentMethod]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setShippingDetails(prev => ({ ...prev, [name]: value }));
-        if (name === 'pincode') {
-            setPincodeError('');
-        }
+        if (name === 'pincode') setPincodeError('');
     };
 
     const fetchLocationFromPincode = async () => {
@@ -66,14 +64,9 @@ const PlaceOrder = () => {
         try {
             const response = await axios.get(`https://api.postalpincode.in/pincode/${shippingDetails.pincode}`);
             const data = response.data[0];
-
             if (data.Status === 'Success') {
                 const postOffice = data.PostOffice[0];
-                setShippingDetails(prev => ({
-                    ...prev,
-                    city: postOffice.District,
-                    state: postOffice.State
-                }));
+                setShippingDetails(prev => ({ ...prev, city: postOffice.District, state: postOffice.State }));
             } else {
                 setPincodeError("Invalid PIN code. Please check and try again.");
             }
@@ -89,32 +82,89 @@ const PlaceOrder = () => {
         e.preventDefault();
         setIsProcessing(true);
 
-        const orderItems = [];
-        for (const [itemId, sizes] of Object.entries(cartItem)) {
-            for (const [size, quantity] of Object.entries(sizes)) {
-                if (quantity > 0) {
-                    orderItems.push({
-                        productId: itemId,
-                        quantity: quantity,
-                        size: size
-                    });
-                }
-            }
-        }
+        // This data needs to be available inside the handler function
+        const orderItems = Object.entries(cartItem).flatMap(([itemId, sizes]) => 
+            Object.entries(sizes).map(([size, quantity]) => ({
+                productId: itemId,
+                quantity,
+                size
+            }))
+        ).filter(item => item.quantity > 0);
 
         const nameParts = shippingDetails.fullName.trim().split(' ');
-        const firstName = nameParts[0];
-        const lastName = nameParts.slice(1).join(' ');
-
         const addressPayload = {
             ...shippingDetails,
-            firstName: firstName,
-            lastName: lastName
+            firstName: nameParts[0],
+            lastName: nameParts.slice(1).join(' ')
         };
         delete addressPayload.fullName;
 
+        if (paymentMethod === 'online') {
+            try {
+                const { data: { key } } = await axios.get(`${serverUrl}/api/getkey`);
+                const { data: { order } } = await axios.post(`${serverUrl}/api/order/create-order`, {
+                    amount: finalTotal,
+                }, { withCredentials: true });
 
-        if (paymentMethod === 'cod') {
+                const options = {
+                    key,
+                    amount: order.amount,
+                    currency: "INR",
+                    name: "Your Store Name",
+                    description: "Order Payment",
+                    image: "https://example.com/your_logo.jpg",
+                    order_id: order.id,
+                    handler: async function (response) {
+                        try {
+                            // Send all the necessary data to the backend for verification
+                            const verificationResponse = await axios.post(`${serverUrl}/api/order/verify-payment`, {
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                items: orderItems, // Sending the cart items
+                                amount: finalTotal, // Sending the final amount
+                                address: addressPayload // Sending the shipping address
+                            }, { withCredentials: true });
+
+                            if (verificationResponse.data.success) {
+                                toast.success("Payment successful! Order placed.");
+                                if (clearCart) clearCart();
+                                // --- FIX: Navigate to the correct /order page ---
+                                navigate('/order');
+                            } else {
+                                toast.error(verificationResponse.data.message || "Payment verification failed.");
+                                setIsProcessing(false);
+                            }
+                        } catch (error) {
+                            toast.error("An error occurred during payment verification.");
+                            setIsProcessing(false);
+                        }
+                    },
+                    prefill: {
+                        name: shippingDetails.fullName,
+                        email: user?.email || '',
+                        contact: shippingDetails.phone,
+                    },
+                    notes: {
+                        address: `${shippingDetails.address}, ${shippingDetails.city}, ${shippingDetails.state} - ${shippingDetails.pincode}`,
+                    },
+                    theme: {
+                        color: "#E8A444",
+                    },
+                };
+
+                const rzp1 = new window.Razorpay(options);
+                rzp1.on('payment.failed', function (response) {
+                    toast.error(`Payment failed: ${response.error.description}`);
+                    setIsProcessing(false);
+                });
+                rzp1.open();
+
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Failed to initiate payment.");
+                setIsProcessing(false);
+            }
+        } else { // COD Logic
             try {
                 const response = await axios.post(`${serverUrl}/api/order/create`, {
                     items: orderItems,
@@ -125,22 +175,31 @@ const PlaceOrder = () => {
 
                 if (response.data.success) {
                     toast.success("Order placed successfully!");
-                    if (clearCart) {
-                        clearCart();
-                    }
+                    if (clearCart) clearCart();
                     navigate('/order');
                 } else {
-                    toast.error(response.data.message || "Failed to place order. Please try again.");
+                    toast.error(response.data.message || "Failed to place order.");
                 }
             } catch (error) {
                 console.error("Failed to place COD order:", error);
-                toast.error(error.response?.data?.message || "Could not place order. Please try again.");
+                toast.error(error.response?.data?.message || "Could not place order.");
+            } finally {
+                setIsProcessing(false);
             }
-        } else {
-            toast.info("Online payment is not yet available.");
         }
-        setIsProcessing(false);
     };
+
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+        return () => {
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
+        };
+    }, []);
 
     return (
         <div className="bg-gradient-to-b from-[#fbeee6] via-[#f3d9c8] to-[#e8cbb3] min-h-screen pt-24 md:pt-28 pb-28 md:pb-12 px-4 sm:px-6 lg:px-8 font-sans">
@@ -165,16 +224,7 @@ const PlaceOrder = () => {
                                 </div>
                                 <div>
                                     <label className="block text-gray-600 mb-1">Pincode</label>
-                                    <input 
-                                        type="text" 
-                                        name="pincode" 
-                                        value={shippingDetails.pincode} 
-                                        onChange={handleInputChange} 
-                                        onBlur={fetchLocationFromPincode}
-                                        required 
-                                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-amber-500" 
-                                        placeholder="e.g., 400001" 
-                                    />
+                                    <input type="text" name="pincode" value={shippingDetails.pincode} onChange={handleInputChange} onBlur={fetchLocationFromPincode} required className="w-full p-2 border rounded-md focus:ring-2 focus:ring-amber-500" placeholder="e.g., 400001" />
                                     {pincodeLoading && <p className="text-xs text-gray-500 mt-1">Fetching location...</p>}
                                     {pincodeError && <p className="text-xs text-red-500 mt-1">{pincodeError}</p>}
                                 </div>
@@ -184,17 +234,9 @@ const PlaceOrder = () => {
                                 </div>
                                 <div className="sm:col-span-2">
                                     <label className="block text-gray-600 mb-1">State</label>
-                                    <select 
-                                        name="state" 
-                                        value={shippingDetails.state} 
-                                        onChange={handleInputChange} 
-                                        required 
-                                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-amber-500 bg-white"
-                                    >
+                                    <select name="state" value={shippingDetails.state} onChange={handleInputChange} required className="w-full p-2 border rounded-md focus:ring-2 focus:ring-amber-500 bg-white">
                                         <option value="" disabled>Select your state</option>
-                                        {indianStates.map(state => (
-                                            <option key={state} value={state}>{state}</option>
-                                        ))}
+                                        {indianStates.map(state => (<option key={state} value={state}>{state}</option>))}
                                     </select>
                                 </div>
                             </div>
@@ -211,7 +253,6 @@ const PlaceOrder = () => {
                                         <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={(e) => setPaymentMethod(e.target.value)} className="h-4 w-4 text-amber-600 focus:ring-amber-500" />
                                         <span className="ml-3 text-gray-700 font-medium">Cash on Delivery (COD)</span>
                                     </label>
-                                    {/* --- NEW: Professional note to encourage online payment --- */}
                                     <p className="text-xs text-gray-500 mt-2 px-1">
                                         <b>Save ₹100:</b> A convenience fee is applied to COD orders. <a href="#" onClick={(e) => { e.preventDefault(); setPaymentMethod('online'); }} className="text-amber-600 font-semibold hover:underline">Pay online to avoid this charge.</a>
                                     </p>
@@ -256,11 +297,7 @@ const PlaceOrder = () => {
                                     <p>{currency}{finalTotal}</p>
                                 </div>
                             </div>
-                            <button
-                                type="submit"
-                                disabled={isProcessing}
-                                className="w-full mt-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-3 rounded-full hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg text-lg transform hover:scale-105 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
+                            <button type="submit" disabled={isProcessing} className="w-full mt-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-3 rounded-full hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg text-lg transform hover:scale-105 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed">
                                 {isProcessing ? 'Processing...' : `Pay ${currency}${finalTotal}`}
                             </button>
                         </div>

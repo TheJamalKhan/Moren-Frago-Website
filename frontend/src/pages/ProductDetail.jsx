@@ -76,7 +76,6 @@ const SizeChartModal = ({ isOpen, onClose }) => {
                                 <th className="py-3 px-4 border-b-2 border-gray-200">Sleeve Length ({unit === 'in' ? 'In Inch' : 'In Cms'})</th>
                             </tr>
                         </thead>
-                        {/* --- FIX APPLIED HERE --- */}
                         <tbody>{
                             sizeData[unit].map((row, index) => (
                                 <tr key={row.size} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-100 last:border-b-0`}>
@@ -97,62 +96,68 @@ const SizeChartModal = ({ isOpen, onClose }) => {
     );
 };
 
+// --- UPDATED: OptionSelector Component ---
 const OptionSelector = ({ product, selectedOption, setSelectedOption, onOpenSizeChart }) => {
-    const clothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
-    let options = [];
-    let label = "Select Option";
-    let showSizeChartButton = false;
-    const category = product.category?.toLowerCase() || '';
+    // --- FIX: Use a master list of all possible sizes ---
+    const allClothingSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    const availableSizes = product.sizes || [];
+    const label = "Select Size:";
+    const showSizeChartButton = product.category?.toLowerCase() === 'men';
 
-    if (category === 'men') {
-        options = clothingSizes;
-        label = "Select Size:";
-        showSizeChartButton = true;
+    // Only show the selector if the product is in a category that uses sizes.
+    if (!showSizeChartButton) {
+        return null;
     }
-
-    if (options.length === 0) return null;
 
     return (
         <div className="my-6">
             <div className="flex justify-between items-center mb-3">
                 <h2 className="text-md font-semibold">{label}</h2>
-                {showSizeChartButton && (
-                    <button onClick={onOpenSizeChart} className="text-sm font-medium text-orange-600 hover:underline">Size Chart</button>
-                )}
+                <button onClick={onOpenSizeChart} className="text-sm font-medium text-orange-600 hover:underline">Size Chart</button>
             </div>
             <div className="flex flex-wrap gap-3">
-                {options.map(option => (
-                    <button
-                        key={option}
-                        onClick={() => setSelectedOption(option)}
-                        className={`px-6 h-14 flex items-center justify-center rounded-full border-2 font-semibold transition-all duration-200 ${
-                            selectedOption === option
-                                ? 'bg-stone-900 text-white border-stone-900 scale-110 shadow-lg'
-                                : 'bg-white text-stone-800 border-stone-300 hover:border-stone-900 hover:text-white hover:bg-stone-800'
-                        }`}
-                    >
-                        {option}
-                    </button>
-                ))}
+                {allClothingSizes.map(size => {
+                    const isAvailable = availableSizes.includes(size);
+                    return (
+                        <button
+                            key={size}
+                            onClick={() => isAvailable && setSelectedOption(size)}
+                            disabled={!isAvailable}
+                            className={`px-6 h-14 flex items-center justify-center rounded-full border-2 font-semibold transition-all duration-200 relative ${
+                                selectedOption === size
+                                    ? 'bg-stone-900 text-white border-stone-900 scale-110 shadow-lg'
+                                    : isAvailable
+                                    ? 'bg-white text-stone-800 border-stone-300 hover:border-stone-900 hover:text-white hover:bg-stone-800'
+                                    : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                            }`}
+                        >
+                            {size}
+                            {/* --- FIX: Add a line-through element for unavailable sizes --- */}
+                            {!isAvailable && (
+                                <span className="absolute w-full h-0.5 bg-gray-400 rotate-[-15deg] scale-x-110"></span>
+                            )}
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );
 };
 
+// --- UPDATED: ProductInfo Component ---
 const ProductInfo = ({ product, currency, selectedOption, setSelectedOption }) => {
     const { addToCart, loading } = useContext(shopDataContext);
     const [isSizeChartOpen, setSizeChartOpen] = useState(false);
 
     const handleAddToCart = () => {
-        const productCategory = product.category?.toLowerCase();
-        const requiresOption = productCategory === 'men';
+        const requiresOption = product.sizes && product.sizes.length > 0;
 
         if (requiresOption && !selectedOption) {
             toast.warn("Please select a size first!");
             return;
         }
         
-        addToCart(product.id || product._id, selectedOption);
+        addToCart(product.id || product._id, selectedOption || null);
     };
 
     return (
@@ -222,6 +227,14 @@ function ProductDetail() {
                         foundProduct.image4
                     ].filter(Boolean));
                 }
+                
+                // --- FIX: Automatically select the first AVAILABLE size ---
+                if (foundProduct.sizes && foundProduct.sizes.length > 0) {
+                    setSelectedOption(foundProduct.sizes[0]);
+                } else {
+                    setSelectedOption(''); // Reset if no sizes
+                }
+
             } else {
                 console.warn(`Product with ID ${id} not found.`);
             }

@@ -11,6 +11,7 @@ function Ai() {
   const { logout, signInWithGoogle } = useContext(userDataContext);
   const navigate = useNavigate();
   const [activeAi, setActiveAi] = useState(false);
+  const [firstTimeGreeting, setFirstTimeGreeting] = useState(true);
   const openingSound = new Audio(open);
 
   function speak(message) {
@@ -30,7 +31,6 @@ function Ai() {
   recognition.lang = 'en-US';
   recognition.interimResults = false;
 
-  // Tour Functionality
   const startTour = async () => {
     const pages = [
       { path: "/", message: "Welcome to Moren Frago. Let's start the tour from the homepage." },
@@ -48,7 +48,7 @@ function Ai() {
       const { path, message } = pages[i];
       navigate(path);
       speak(message);
-      await new Promise(resolve => setTimeout(resolve, 9000)); // Wait for speech and page load
+      await new Promise(resolve => setTimeout(resolve, 9000));
     }
 
     speak("That concludes your tour of Moren Frago. Feel free to explore more or ask me anything.");
@@ -74,17 +74,11 @@ function Ai() {
     { keywords: ["delivery", "delivery information"], action: () => { speak("Opening the delivery page."); navigate("/delivery"); } },
     { keywords: ["terms", "terms and conditions", "terms of service"], action: () => { speak("Opening the terms and conditions page."); navigate("/terms"); } },
     { keywords: ["check out", "checkout"], action: () => { speak("Proceeding to checkout."); navigate("/checkout"); } },
-
-    // Voice shopping
     { keywords: ["add to cart"], action: () => { speak("Item added to cart."); toast.success("Simulated: Item added to cart."); } },
     { keywords: ["place order", "order now"], action: () => { speak("Placing your order."); toast.success("Simulated: Order placed!"); navigate("/order"); } },
     { keywords: ["pay now", "make payment", "proceed to payment"], action: () => { speak("Redirecting to payment."); toast.success("Simulated: Payment successful."); navigate("/payment-success"); } },
-
-    // Social media
     { keywords: ["instagram", "open instagram", "instagram page"], action: () => { speak("Opening Instagram."); window.open("https://www.instagram.com/morenfrago_india", "_blank"); } },
     { keywords: ["youtube", "open youtube", "youtube channel"], action: () => { speak("Opening YouTube."); window.open("https://www.youtube.com/@jamaluplifts", "_blank"); } },
-
-    // Developer intro
     {
       keywords: ["who is the developer", "who made this", "who built this website", "who developed this", "who created this site", "who created this website", "who is jamal", "who is the creator"],
       action: () => {
@@ -97,8 +91,6 @@ His expertise in modern web technologies and commitment to quality are the found
         toast.info("This website was developed by Md. Jamal Ashraf Khan.");
       }
     },
-
-    // Tour trigger
     {
       keywords: ["show me around", "give me a tour", "explore the website", "introduce moren frago", "take me through the website"],
       action: () => {
@@ -136,6 +128,11 @@ His expertise in modern web technologies and commitment to quality are the found
       recognition.start();
       openingSound.play();
       setActiveAi(true);
+
+      if (firstTimeGreeting) {
+        speak("Hello! I'm your AI assistant. You can say things like 'open search', 'go to cart', or 'give me a tour' to explore the website. I'm here to help you navigate Moren Frago.");
+        setFirstTimeGreeting(false);
+      }
     } catch (error) {
       console.error("Recognition start error:", error);
       setActiveAi(false);

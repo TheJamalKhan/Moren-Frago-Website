@@ -13,6 +13,21 @@ const LoadingSpinner = () => (
     </div>
 );
 
+// --- NEW: Reusable Toggle Switch Component ---
+const StockToggle = ({ isOutOfStock, onToggle }) => (
+    <label htmlFor={`stock-toggle-${isOutOfStock}`} className="flex items-center cursor-pointer">
+        <div className="relative">
+            <input type="checkbox" id={`stock-toggle-${isOutOfStock}`} className="sr-only" checked={!isOutOfStock} onChange={onToggle} />
+            <div className={`block w-14 h-8 rounded-full transition ${isOutOfStock ? 'bg-red-300' : 'bg-green-300'}`}></div>
+            <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isOutOfStock ? 'transform translate-x-0' : 'transform translate-x-6'}`}></div>
+        </div>
+        <div className={`ml-3 text-sm font-semibold ${isOutOfStock ? 'text-red-700' : 'text-green-800'}`}>
+            {isOutOfStock ? 'Out of Stock' : 'In Stock'}
+        </div>
+    </label>
+);
+
+
 function Lists() {
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,7 +37,6 @@ function Lists() {
         try {
             const result = await axios.get(`${serverUrl}/api/product/list`);
             if (result.data.success) {
-                // Sort list by date, newest first
                 const sortedList = result.data.data.sort((a, b) => new Date(b.date) - new Date(a.date));
                 setList(sortedList);
             }
@@ -35,13 +49,12 @@ function Lists() {
     };
 
     const removeList = async (id, productName) => {
-        // Professional Feature: Add a confirmation before deleting
         if (window.confirm(`Are you sure you want to remove "${productName}"?`)) {
             try {
                 const result = await axios.post(`${serverUrl}/api/product/remove/${id}`, {}, { withCredentials: true });
                 if (result.data.success) {
                     toast.success(`"${productName}" removed successfully!`);
-                    fetchList(); // Refresh the list after deletion
+                    fetchList();
                 } else {
                     toast.error("Failed to remove product.");
                 }
@@ -51,6 +64,27 @@ function Lists() {
             }
         }
     };
+    
+    // --- NEW: Function to handle stock status toggle ---
+    const handleStockToggle = async (id, currentStatus) => {
+        const newStatus = !currentStatus;
+        try {
+            // Update the product in the backend
+            await axios.put(`${serverUrl}/api/product/stock/${id}`, { outOfStock: newStatus }, { withCredentials: true });
+            
+            // Update the product in the local state for an instant UI change
+            setList(prevList => 
+                prevList.map(item => 
+                    item._id === id ? { ...item, outOfStock: newStatus } : item
+                )
+            );
+            toast.success(`Product status updated!`);
+        } catch (error) {
+            console.error("Failed to update stock status:", error);
+            toast.error("Could not update status. Please try again.");
+        }
+    };
+
 
     useEffect(() => {
         fetchList();
@@ -86,18 +120,19 @@ function Lists() {
                                         <div className='flex-1 text-center md:text-left'>
                                             <p className='font-bold text-lg text-gray-800'>{item.name}</p>
                                             <p className='text-sm text-gray-500'>{item.category} &gt; {item.subCategory}</p>
-                                            
                                             <div className='mt-2 flex items-center justify-center md:justify-start gap-3'>
                                                 <p className='font-semibold text-lg text-[#4A2E2A]'>₹{item.price}</p>
                                                 {item.mrp > item.price && (
                                                     <p className='text-gray-400 line-through text-sm'>₹{item.mrp}</p>
                                                 )}
-                                                {item.discountPercentage > 0 && (
-                                                    <p className='text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full'>{item.discountPercentage}% OFF</p>
-                                                )}
                                             </div>
                                         </div>
-                                        <div className='w-full md:w-auto mt-4 md:mt-0 flex justify-end'>
+                                        {/* --- NEW: Stock Toggle Switch --- */}
+                                        <div className="w-full md:w-auto mt-4 md:mt-0 flex items-center justify-center gap-6">
+                                            <StockToggle 
+                                                isOutOfStock={item.outOfStock}
+                                                onToggle={() => handleStockToggle(item._id, item.outOfStock)}
+                                            />
                                             <button 
                                                 onClick={() => removeList(item._id, item.name)}
                                                 className='flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 transition-colors duration-200'

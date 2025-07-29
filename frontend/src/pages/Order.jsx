@@ -3,10 +3,10 @@ import { authDataContext } from '../context/AuthContext';
 import { userDataContext } from '../context/UserContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FiPackage, FiCalendar, FiCreditCard, FiMapPin, FiShoppingCart, FiHash, FiCheck } from 'react-icons/fi';
+import { FiShoppingCart, FiHash, FiCalendar, FiCreditCard, FiMapPin, FiCheck } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
 
-// --- UPDATED COMPONENT: StatusBar ---
+// --- STATUS BAR COMPONENT (Unchanged) ---
 const StatusBar = ({ status }) => {
     const stages = ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
     const currentStatusIndex = stages.indexOf(status);
@@ -41,7 +41,6 @@ const StatusBar = ({ status }) => {
                         <React.Fragment key={stage}>
                             <div className="flex flex-col items-center text-center w-20">
                                 <div style={pulseStyle} className={`w-8 h-8 rounded-full flex items-center justify-center text-white transition-colors duration-500 ${circleColor} ${isCurrent ? 'glowing-pulse' : ''}`}>
-                                    {/* --- FIX: Show checkmark if stage is completed OR if it's the 'Delivered' stage --- */}
                                     {isCompleted || (isCurrent && stage === 'Delivered') ? <FiCheck size={16} /> : <span>{index + 1}</span>}
                                 </div>
                                 <p className={`mt-2 text-xs font-semibold transition-colors duration-500 ${isCompleted || isCurrent ? 'text-gray-800' : 'text-gray-400'}`}>{stage}</p>
@@ -55,7 +54,7 @@ const StatusBar = ({ status }) => {
     );
 };
 
-// --- NEW COMPONENT: DeliveredMessage ---
+// --- DELIVERED MESSAGE COMPONENT (Unchanged) ---
 const DeliveredMessage = () => {
     const styles = `
         @keyframes fadeIn {
@@ -87,44 +86,38 @@ const Order = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    // --- ANIMATION STYLES FOR ORDER CARDS ---
     const animationStyles = `
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .fade-in-up-item {
-            /* Set initial state for animation */
             opacity: 0;
             animation: fadeInUp 0.5s ease-out forwards;
         }
     `;
 
-    const fetchOrders = async () => {
-        if (!userData) return;
-        try {
-            const response = await axios.get(`${serverUrl}/api/order/userorders`, { withCredentials: true });
-            if (response.data.success) {
-                const sortedOrders = response.data.data.sort((a, b) => new Date(b.date) - new Date(a.date));
-                setOrders(sortedOrders);
+    useEffect(() => {
+        const fetchOrders = async () => {
+            setLoading(true);
+            try {
+                const response = await axios.get(`${serverUrl}/api/order/userorders`, { withCredentials: true });
+                if (response.data.success) {
+                    const sortedOrders = response.data.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    setOrders(sortedOrders);
+                }
+            } catch (error) {
+                console.error("Failed to fetch orders:", error);
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error("Failed to fetch orders:", error);
-        } finally {
+        };
+
+        if (userData) {
+            fetchOrders();
+        } else {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchOrders();
-        const intervalId = setInterval(fetchOrders, 10000);
-        return () => clearInterval(intervalId);
     }, [serverUrl, userData]);
 
     return (
@@ -134,7 +127,7 @@ const Order = () => {
                 <h1 className="text-3xl sm:text-4xl font-bold text-center text-[#4A2E2A] mb-8 tracking-wide">My Orders</h1>
 
                 <div className="bg-transparent p-0 md:p-6 rounded-xl">
-                    {loading && orders.length === 0 ? (
+                    {loading ? (
                         <p className="text-center text-gray-500 text-lg">Loading your orders...</p>
                     ) : orders.length > 0 ? (
                         <div className="space-y-6">
@@ -142,7 +135,6 @@ const Order = () => {
                                 <div 
                                     key={order._id} 
                                     className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden fade-in-up-item"
-                                    // --- STAGGERED ANIMATION DELAY ---
                                     style={{ animationDelay: `${index * 100}ms` }}
                                 >
                                     <div className="p-4 sm:p-6">
@@ -166,8 +158,8 @@ const Order = () => {
                                         <div className="mb-4 pt-4 border-t border-gray-200">
                                             <h3 className="text-lg font-semibold text-gray-800 mb-3">Items</h3>
                                             <div className="space-y-3">
-                                                {order.items.map((item, index) => (
-                                                    <div key={index} className="flex items-center gap-4">
+                                                {order.items.map((item, itemIndex) => (
+                                                    <div key={itemIndex} className="flex items-center gap-4">
                                                         <img
                                                             src={item.image}
                                                             alt={item.name || 'Product'}
@@ -194,7 +186,8 @@ const Order = () => {
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <FiCreditCard className="w-5 h-5 text-[#4A2E2A]"/>
-                                                    <p><span className="font-semibold">Payment:</span> {order.payment ? "Paid" : "Cash on Delivery"}</p>
+                                                    {/* --- FIX: Correctly display the payment method --- */}
+                                                    <p><span className="font-semibold">Payment:</span> {order.paymentMethod === 'COD' ? "Cash on Delivery" : "Paid Online"}</p>
                                                 </div>
                                                 <div className="md:col-span-2 flex items-start gap-3 mt-2">
                                                     <FiMapPin className="w-5 h-5 text-[#4A2E2A] mt-1 flex-shrink-0"/>

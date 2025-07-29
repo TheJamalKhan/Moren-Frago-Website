@@ -30,6 +30,9 @@ function Add() {
   const [bestseller, setBestSeller] = useState(false);
   const [sizes, setSizes] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // --- NEW: State for Out of Stock ---
+  const [outOfStock, setOutOfStock] = useState(false);
 
   const { serverUrl } = useContext(authDataContext);
 
@@ -76,6 +79,10 @@ function Add() {
       formData.append("subCategory", subCategory);
       formData.append("bestseller", bestseller);
       formData.append("sizes", JSON.stringify(sizes));
+      
+      // --- NEW: Add outOfStock status to the form data ---
+      formData.append("outOfStock", outOfStock);
+
       if (image1) formData.append("image1", image1);
       if (image2) formData.append("image2", image2);
       if (image3) formData.append("image3", image3);
@@ -87,11 +94,13 @@ function Add() {
       });
 
       toast.success("Product added successfully!");
+      // Reset all fields after successful submission
       setName("");
       setDescription("");
       setImage1(null); setImage2(null); setImage3(null); setImage4(null);
       setPrice(""); setMrp(""); setDiscountPercentage(0); setBestSeller(false);
       setCategory("Men"); setSubCategory(categoryOptions["Men"][0]); setSizes([]);
+      setOutOfStock(false); // Reset out of stock checkbox
     } catch (error) {
       console.error("Add Product Failed:", error);
       toast.error("Add Product Failed: " + (error.response?.data?.message || error.message));
@@ -123,8 +132,8 @@ function Add() {
                         if (idx === 0) setImage1(file);
                         else if (idx === 1) setImage2(file);
                         else if (idx === 2) setImage3(file);
-                        else setImage4(file);
-                      }} required />
+                        else if (idx === 4) setImage4(file);
+                      }} required={idx === 0} />
                     </label>
                   ))}
                 </div>
@@ -142,7 +151,7 @@ function Add() {
                 <textarea className="w-full p-2 border-2 border-black rounded-md bg-white" placeholder="Enter description" value={description} onChange={(e) => setDescription(e.target.value)} required />
               </div>
 
-              {/* Category & Subcategory */}
+              {/* Category, Subcategory & Bestseller */}
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
                   <label className="block font-semibold mb-1">Category</label>
@@ -157,8 +166,8 @@ function Add() {
                   </select>
                 </div>
                 <div className="flex items-center gap-2 mt-6">
-                  <input type="checkbox" checked={bestseller} onChange={() => setBestSeller(!bestseller)} />
-                  <label className="font-semibold">Best Seller</label>
+                  <input type="checkbox" id="bestseller" checked={bestseller} onChange={() => setBestSeller(!bestseller)} className="h-4 w-4" />
+                  <label htmlFor="bestseller" className="font-semibold">Best Seller</label>
                 </div>
               </div>
 
@@ -177,19 +186,26 @@ function Add() {
                 </div>
               </div>
 
-              {/* Sizes */}
-              <div>
-                <label className="block font-semibold mb-2">Sizes</label>
-                <div className="flex gap-3 flex-wrap">
-                  {["S", "M", "L", "XL", "XXL"].map(size => (
-                    <div key={size}
-                      className={`px-4 py-2 rounded-lg border-2 border-black cursor-pointer ${
-                        sizes.includes(size) ? "bg-green-400 text-black" : "bg-white"
-                      }`}
-                      onClick={() => setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}>
-                      {size}
-                    </div>
-                  ))}
+              {/* Sizes & Out of Stock */}
+              <div className="grid md:grid-cols-2 gap-6 items-start">
+                <div>
+                  <label className="block font-semibold mb-2">Sizes</label>
+                  <div className="flex gap-3 flex-wrap">
+                    {["S", "M", "L", "XL", "XXL"].map(size => (
+                      <div key={size}
+                        className={`px-4 py-2 rounded-lg border-2 border-black cursor-pointer ${
+                          sizes.includes(size) ? "bg-green-400 text-black" : "bg-white"
+                        }`}
+                        onClick={() => setSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}>
+                        {size}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* --- NEW: Out of Stock Checkbox --- */}
+                <div className="flex items-center gap-2 mt-8">
+                  <input type="checkbox" id="outOfStock" checked={outOfStock} onChange={() => setOutOfStock(!outOfStock)} className="h-4 w-4 accent-red-600" />
+                  <label htmlFor="outOfStock" className="font-semibold text-red-700">Mark as Out of Stock</label>
                 </div>
               </div>
 
