@@ -4,11 +4,14 @@ import { createContext } from 'react';
 export const authDataContext = createContext();
 
 function AuthContext({ children }) {
-  let serverUrl = 'http://localhost:5000'; // This is correct
+  // This code automatically chooses the correct URL.
+  // On Vercel, it uses the live URL. On your local computer, it uses localhost.
+  const serverUrl = import.meta.env.MODE === 'production'
+    ? 'https://moren-frago-backend.onrender.com'
+    : 'http://localhost:5000';
 
-  // Correct way: Pass an object as the value
-  let value = {
-    serverUrl // This creates an object like { serverUrl: 'http://localhost:5000' }
+  const value = {
+    serverUrl
   };
 
   return (
